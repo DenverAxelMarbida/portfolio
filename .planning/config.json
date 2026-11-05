@@ -1,0 +1,18 @@
+{
+  "runtime": "opencode",
+  "mode": "interactive",
+  "granularity": "standard",
+  "parallelization": false,
+  "commit_docs": false,
+  "model_profile": "inherit",
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "auto_advance": false,
+    "compact_content": false
+  },
+  "planner": {
+    "stall_detection_enabled": false
+  }
+}

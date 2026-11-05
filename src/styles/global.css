@@ -1,0 +1,48 @@
+@import 'tailwindcss' source('../');
+
+@theme {
+  --color-background: #080808;
+  --color-foreground: #f4f4f4;
+  --color-muted: #aeb4bd;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    font-family: system-ui, sans-serif;
+    color: var(--color-foreground);
+    background: var(--color-background);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  h1 {
+    margin-block-end: 1rem;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 600;
+    line-height: 1.15;
+  }
+
+  p {
+    margin-block-end: 1rem;
+    color: var(--color-muted);
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-foreground);
+    outline-offset: 3px;
+  }
+}
