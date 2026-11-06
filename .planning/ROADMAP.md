@@ -1,6 +1,6 @@
 # Roadmap: Denver.dev
 
-Status: 01-01 owner-accepted and committed; owner reports pushed. 01-02 owner-accepted 2026-11-06 and authorized for one local acceptance commit. No push or 01-03 execution is authorized. Preserve the owner's five-phase scope.
+Status: 01-01 owner-accepted and committed; owner reports pushed. 01-02 owner-accepted 2026-11-06 and authorized for one local acceptance commit. 01-03 owner-accepted 2026-11-06 (homepage visual design and "How I Work" section approved). No push or 01-04 execution authorized. Preserve the owner's five-phase scope.
 
 ## Phases
 
@@ -30,7 +30,7 @@ Status: 01-01 owner-accepted and committed; owner reports pushed. 01-02 owner-ac
 
 - [x] 01-01-PLAN.md: Foundation and first rendered slice: locally verified, both review findings resolved, owner accepted 2026-11-05. Commit `a38cafb5416a0f8d5d98a774917b91643c5ed621`, owner reports pushed. See [acceptance SUMMARY](phases/01-foundation-homepage/01-01-SUMMARY.md).
 - [x] 01-02-PLAN.md: Validated project publishing: owner-accepted 2026-11-06 after all five Important and two Minor review findings were corrected with regressions. Acceptance records that the corrections did not receive a second independent review because the provider rejected the follow-up on quota. See [acceptance SUMMARY](phases/01-foundation-homepage/01-02-SUMMARY.md) and [verification](../docs/verification/01-02.md).
-- [ ] 01-03-PLAN.md: Responsive identity and homepage
+- [x] 01-03-PLAN.md: Responsive identity and homepage: owner-accepted 2026-11-06. Self-hosted IBM Plex Sans Variable with SIL OFL 1.1; automated axe accessibility (8 tests, zero WCAG A/AA violations); responsive verification at six viewports (320, 375, 640, 768, 1024, 1440px); owner personally reviewed and approved the homepage's visual design, including the updated "How I Work" section. No second independent review (provider quota). See [verification](../docs/verification/01-03.md).
 - [ ] 01-04-PLAN.md: Accessible motion
 - [ ] 01-05-PLAN.md: Quality gates and documentation
 

@@ -114,13 +114,17 @@ export async function checkPublicArtifacts() {
   for (const path of output) {
     if (
       !html.has(path) &&
-      !/^assets\/[\w-]+-[\w-]{8,}\.(js|css)$/.test(path) &&
-      !path.startsWith('media/')
+      !/^assets\/[\w-]+-[\w-]{8,}\.(js|css|woff2)$/.test(path) &&
+      !path.startsWith('media/') &&
+      path !== 'licenses/ibm-plex-sans-OFL.txt'
     )
       throw new Error(`Unexpected public output (source maps forbidden): ${path}`);
   }
   if (!output.some((path) => path.endsWith('.js')) || !output.some((path) => path.endsWith('.css')))
     throw new Error('Missing browser assets');
+  if (!output.some((path) => path.endsWith('.woff2')))
+    throw new Error('Missing self-hosted font assets');
+  if (!output.includes('licenses/ibm-plex-sans-OFL.txt')) throw new Error('Missing font license');
   await comparePublicOnlyBuild(`${JSON.stringify(expected, null, 2)}\n`, output);
   console.log(`Verified ${html.size} HTML documents and ${media.size} public media file(s).`);
 }

@@ -1,9 +1,11 @@
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { getStaticPaths } from './staticPaths';
-import { useState } from 'react';
+import { SiteLayout } from './SiteLayout';
 import { manifest } from '../content/manifest';
-import { getProjectBySlug, getPublishedProjects } from '../content/selectors';
-import type { Claim, PublicProject } from '../../scripts/content/schema';
+import { HomePage } from '../pages/HomePage';
+import { getProjectBySlug } from '../content/selectors';
+import { ProjectMedia } from '../components/projects/ProjectMedia';
+import type { Claim } from '../../scripts/content/schema';
 
 function NotFound() {
   return (
@@ -28,38 +30,17 @@ function ClaimText({ claim }: { claim: Claim }) {
   );
 }
 
-function ProjectImage({ image }: { image: PublicProject['screenshots'][number] }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return <p>Screenshots pending</p>;
-  return (
-    <figure>
-      <img
-        src={`/media/${image.assetPath}`}
-        alt={image.alt}
-        width={image.width}
-        height={image.height}
-        className="h-auto max-w-full"
-        ref={(element) => {
-          if (element?.complete && element.naturalWidth === 0) setFailed(true);
-        }}
-        onError={() => setFailed(true)}
-      />
-      {image.caption && <figcaption>{image.caption}</figcaption>}
-    </figure>
-  );
-}
-
 function ProjectDetailPage() {
   const { slug } = useParams();
   const project = getProjectBySlug(manifest, slug ?? '');
   if (!project) return <NotFound />;
   return (
-    <article className="space-y-6">
+    <article className="project-detail">
       <header>
         <h1>{project.headline}</h1>
         <p>{project.displayName}</p>
         <p>{project.summary}</p>
-        <p>
+        <p className="project-card-status">
           {project.publication.readiness === 'preliminary'
             ? 'Preliminary preview · Evidence pending'
             : 'Reviewed project preview'}
@@ -108,13 +89,10 @@ function ProjectDetailPage() {
           </ul>
         </section>
       )}
-      <section aria-label="Screenshots">
-        {project.screenshots.length ? (
-          project.screenshots.map((image) => <ProjectImage key={image.assetPath} image={image} />)
-        ) : (
-          <p>Screenshots pending</p>
-        )}
-      </section>
+      <ProjectMedia
+        screenshots={project.screenshots}
+        label={`${project.displayName} screenshots`}
+      />
       {project.architecture && (
         <section>
           <h2>Architecture</h2>
@@ -122,9 +100,12 @@ function ProjectDetailPage() {
           {project.architecture.decisions.map((claim, index) => (
             <ClaimText key={index} claim={claim} />
           ))}
-          {project.architecture.diagrams.map((image) => (
-            <ProjectImage key={image.assetPath} image={image} />
-          ))}
+          {project.architecture.diagrams.length > 0 && (
+            <ProjectMedia
+              screenshots={project.architecture.diagrams}
+              label={`${project.displayName} architecture diagrams`}
+            />
+          )}
         </section>
       )}
       {(
@@ -168,51 +149,22 @@ function ProjectDetailPage() {
   );
 }
 
-function HomePage() {
-  const projects = getPublishedProjects(manifest);
+function RouteContent() {
+  const { pathname } = useLocation();
+  if (!getStaticPaths().includes(pathname)) return <NotFound />;
   return (
-    <>
-      <h1>{manifest.profile.name}</h1>
-      <p>{manifest.profile.title}</p>
-      <a href={manifest.profile.github}>View GitHub</a>
-      <section id="projects" className="mt-12 space-y-8" aria-labelledby="projects-heading">
-        <h2 id="projects-heading">Project previews</h2>
-        {projects.length === 0 ? (
-          <p>Project previews are being prepared.</p>
-        ) : (
-          projects.map((project) => (
-            <article key={project.slug}>
-              <h3>
-                <a href={`/projects/${project.slug}/`}>{project.headline}</a>
-              </h3>
-              <p>{project.displayName}</p>
-              <p>{project.summary}</p>
-              <p>
-                {project.publication.readiness === 'preliminary'
-                  ? 'Preliminary preview · Evidence pending'
-                  : 'Reviewed project preview'}
-              </p>
-            </article>
-          ))
-        )}
-      </section>
-    </>
+    <Routes>
+      <Route path="/" element={<HomePage manifest={manifest} />} />
+      <Route path="/projects/:slug/" element={<ProjectDetailPage />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
 export function AppRoutes() {
-  const { pathname } = useLocation();
   return (
-    <main className="mx-auto max-w-3xl px-5 py-16">
-      {getStaticPaths().includes(pathname) ? (
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/projects/:slug/" element={<ProjectDetailPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      ) : (
-        <NotFound />
-      )}
-    </main>
+    <SiteLayout>
+      <RouteContent />
+    </SiteLayout>
   );
 }

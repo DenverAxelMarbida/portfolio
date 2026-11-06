@@ -94,7 +94,12 @@ test.describe('development URL handling', () => {
         window.history.pushState(null, '', '/');
         window.dispatchEvent(new PopStateEvent('popstate'));
       });
-      await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+      await expect(
+        page.getByRole('heading', {
+          level: 1,
+          name: 'Building Problem-Solving Software with AI.',
+        }),
+      ).toBeVisible();
       expect(await originalMain?.evaluate((element) => element.isConnected)).toBe(true);
       expect(errors).toEqual([]);
     });

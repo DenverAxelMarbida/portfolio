@@ -34,8 +34,10 @@ test('tracer identity and native GitHub navigation work without JavaScript', asy
   const page = await context.newPage();
   try {
     await page.goto('http://127.0.0.1:4173/');
-    await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
-    await expect(page.getByText('Agentic Full-Stack Software Developer')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+    ).toBeVisible();
+    await expect(page.getByText('Agentic Full-Stack Software Developer').first()).toBeVisible();
     const link = page.getByRole('link', { name: 'View GitHub' });
     await expect(link).toHaveAttribute('href', 'https://github.com/DenverAxelMarbida');
     // Fulfil only the external destination; navigation still uses the real native link.
@@ -67,7 +69,9 @@ test('tracer hydrates without errors and responds to client route changes', asyn
     await route.continue();
   });
   await page.goto('/', { waitUntil: 'commit' });
-  await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+  ).toBeVisible();
   const originalMain = await page.getByRole('main').elementHandle();
   expect(originalMain).not.toBeNull();
   releaseScript();
@@ -80,7 +84,9 @@ test('tracer hydrates without errors and responds to client route changes', asyn
   expect(await originalMain?.evaluate((element) => element.isConnected)).toBe(true);
   await page.getByRole('link', { name: 'Back to home' }).click();
   await expect(page).toHaveURL('/');
-  await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+  ).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -90,7 +96,9 @@ test('direct homepage refresh preserves content and loads emitted assets', async
 }) => {
   expect((await page.goto('/'))?.status()).toBe(200);
   expect((await page.reload())?.status()).toBe(200);
-  await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+  ).toBeVisible();
   const script = await page.locator('script[type="module"]').getAttribute('src');
   const stylesheet = await page.locator('link[rel="stylesheet"]').getAttribute('href');
   expect(script).toMatch(/^\/assets\/.+\.js$/);
@@ -125,7 +133,9 @@ for (const pathname of ['/missing', '/projects/not-published/']) {
     expect((await page.reload())?.status()).toBe(404);
     await page.getByRole('link', { name: 'Back to home' }).click();
     await expect(page).toHaveURL('/');
-    await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+    ).toBeVisible();
     expect(hydrationErrors).toEqual([]);
   });
 }
@@ -139,7 +149,9 @@ test('unknown routes have a usable native home link with JavaScript disabled', a
     expect((await page.goto('http://127.0.0.1:4173/missing'))?.status()).toBe(404);
     await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
     await page.getByRole('link', { name: 'Back to home' }).click();
-    await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+    ).toBeVisible();
   } finally {
     await context.close();
   }
@@ -152,8 +164,10 @@ test('failed client script leaves static content and navigation usable', async (
     await route.abort('failed');
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
-  await expect(page.getByText('Agentic Full-Stack Software Developer')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+  ).toBeVisible();
+  await expect(page.getByText('Agentic Full-Stack Software Developer').first()).toBeVisible();
   await expect(page.getByRole('link', { name: 'View GitHub' })).toHaveAttribute(
     'href',
     'https://github.com/DenverAxelMarbida',
@@ -172,17 +186,23 @@ for (const javaScriptEnabled of [true, false]) {
     try {
       const page = await context.newPage();
       await page.goto('http://127.0.0.1:4173/');
-      await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+      await expect(
+        page.getByRole('heading', {
+          level: 1,
+          name: 'Building Problem-Solving Software with AI.',
+        }),
+      ).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         320,
       );
       const main = page.getByRole('main');
       await expect(main).toHaveCSS('padding-left', '20px');
-      const link = page.getByRole('link', { name: 'View GitHub' });
       await page.keyboard.press('Tab');
-      await expect(link).toBeFocused();
-      await expect(link).toHaveCSS('outline-style', 'solid');
-      await expect(link).toHaveCSS('outline-width', '2px');
+      const skip = page.getByRole('link', { name: 'Skip to main content' });
+      await expect(skip).toBeFocused();
+      await expect(skip).toHaveCSS('outline-style', 'solid');
+      await expect(skip).toHaveCSS('outline-width', '2px');
+      const link = page.getByRole('link', { name: 'View GitHub' });
       const bounds = await link.boundingBox();
       expect(bounds?.height).toBeGreaterThanOrEqual(44);
       expect((bounds?.x ?? 320) + (bounds?.width ?? 1)).toBeLessThanOrEqual(320);
@@ -251,7 +271,7 @@ test('deployable artifacts contain only approved HTML and hashed browser assets'
   expect(files.length).toBeGreaterThanOrEqual(4);
   for (const file of files) {
     expect(file).toMatch(
-      /^(?:index\.html|404\.html|projects\/(?:saklolo161|bistrobuddies-app|bistrobuddies-promo|erp-quotation-migrator)\/index\.html|assets\/[\w-]+\.(?:js|css))$/,
+      /^(?:index\.html|404\.html|projects\/(?:saklolo161|bistrobuddies-app|bistrobuddies-promo|erp-quotation-migrator)\/index\.html|assets\/[\w-]+\.(?:js|css|woff2)|media\/profile\/profile\.jpg|licenses\/ibm-plex-sans-OFL\.txt)$/,
     );
   }
 });
@@ -302,7 +322,9 @@ for (const pathname of ['/INDEX.html', '/index.html/', '/404.HTML', '/404.html/'
       window.history.pushState(null, '', '/');
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
-    await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+    ).toBeVisible();
     expect(errors).toEqual([]);
   });
 }

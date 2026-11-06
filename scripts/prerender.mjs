@@ -93,6 +93,12 @@ export async function buildPublicSite() {
   await writeFile(resolve(dist, '404.html'), createDocument(notFound.html, assets, 404));
   await rm(resolve(dist, '.vite'), { recursive: true, force: true });
   await cp(resolve(generated, 'media'), resolve(dist, 'media'), { recursive: true });
+  // Copy font license to dist/licenses/
+  await mkdir(resolve(dist, 'licenses'), { recursive: true });
+  await cp(
+    resolve(root, 'src/assets/fonts/IBM-Plex-Sans-OFL.txt'),
+    resolve(dist, 'licenses/ibm-plex-sans-OFL.txt'),
+  );
   console.log(`Prerendered ${server.getStaticPaths().length} route(s) and 404.html.`);
 }
 

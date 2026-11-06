@@ -1,0 +1,174 @@
+import type { PublicManifest } from '../../scripts/content/schema';
+import { getPublishedProjects } from '../content/selectors';
+import { ProfileCard } from '../components/hero/ProfileCard';
+import { ProjectCard } from '../components/projects/ProjectCard';
+
+const BUILT_STACK = [
+  'React',
+  'TypeScript',
+  'Vite',
+  'Tailwind CSS',
+  'React Router',
+  'Playwright',
+  'Vitest',
+  'Node.js',
+] as const;
+
+const WORKFLOW = [
+  {
+    title: 'Understand the Problem',
+    body: "I start by understanding who I'm building for, what they need, and the challenges they're facing.",
+  },
+  {
+    title: 'Define Success',
+    body: 'I set clear goals and requirements so I know what the solution needs to achieve.',
+  },
+  {
+    title: 'Plan the Build',
+    body: 'I break complex projects into smaller, manageable tasks with clear priorities and checkpoints.',
+  },
+  {
+    title: 'Build with AI Assistance',
+    body: 'I use AI-powered and agentic workflows to accelerate development while reviewing and guiding the implementation myself.',
+  },
+  {
+    title: 'Test and Improve',
+    body: 'I test functionality, review the user experience, and refine the implementation based on what I find.',
+  },
+  {
+    title: 'Document the Work',
+    body: "I record important decisions, implementation details, and what I've verified so the project is easier to maintain and improve.",
+  },
+] as const;
+
+const MOTIF_NODES = [
+  [60, 120],
+  [180, 60],
+  [300, 140],
+  [430, 70],
+  [540, 160],
+  [120, 280],
+  [260, 300],
+  [400, 260],
+  [520, 330],
+  [330, 40],
+] as const;
+
+const MOTIF_LINKS = [
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [3, 4],
+  [0, 5],
+  [5, 6],
+  [6, 7],
+  [7, 8],
+  [2, 6],
+  [1, 9],
+] as const;
+
+export function HomePage({ manifest }: { manifest: PublicManifest }) {
+  const { profile } = manifest;
+  const projects = getPublishedProjects(manifest);
+  const headline = profile.headline ?? profile.name;
+
+  return (
+    <article className="home">
+      <section className="hero" aria-labelledby="hero-heading">
+        <div className="hero-motif" aria-hidden="true">
+          <svg viewBox="0 0 600 400" focusable="false">
+            {MOTIF_LINKS.map(([from, to]) => {
+              const start = MOTIF_NODES[from] as readonly [number, number];
+              const end = MOTIF_NODES[to] as readonly [number, number];
+              return (
+                <line key={`${from}-${to}`} x1={start[0]} y1={start[1]} x2={end[0]} y2={end[1]} />
+              );
+            })}
+            {MOTIF_NODES.map(([cx, cy]) => (
+              <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="2.5" />
+            ))}
+          </svg>
+        </div>
+        <div className="hero-copy">
+          <p className="hero-eyebrow">{profile.title}</p>
+          <h1 id="hero-heading">{headline}</h1>
+          {profile.introduction && <p className="hero-intro">{profile.introduction}</p>}
+          <div className="hero-actions">
+            <a className="button button-primary" href="#projects">
+              Explore My Projects
+            </a>
+            <a className="button button-secondary" href={profile.github}>
+              View GitHub
+            </a>
+          </div>
+        </div>
+        <ProfileCard profile={profile} />
+      </section>
+
+      <section
+        id="projects"
+        className="page-section"
+        aria-labelledby="projects-heading"
+        tabIndex={-1}
+      >
+        <h2 id="projects-heading">Project previews</h2>
+        {projects.length === 0 ? (
+          <p>Project previews are being prepared.</p>
+        ) : (
+          <div className="projects-grid">
+            {projects.map((project) => (
+              <ProjectCard key={project.slug} project={project} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section
+        id="approach"
+        className="page-section"
+        aria-labelledby="approach-heading"
+        tabIndex={-1}
+      >
+        <div className="approach-overview">
+          <h2 id="approach-heading">Software shaped by the problem.</h2>
+          <p>
+            I build end-to-end software: interface, application logic, data and deployment. The work
+            starts from a real need and moves toward a solution that can be used, tested and
+            explained.
+          </p>
+          <p>
+            Problem-to-solution thinking keeps scope honest. Evidence and review keep the result
+            accountable.
+          </p>
+        </div>
+
+        <div className="approach-capabilities">
+          <h3>Capabilities and technologies</h3>
+          <p>
+            Full-stack delivery guided by AI-assisted workflows, from early framing through
+            implementation, review and documentation.
+          </p>
+          <p className="stack-label">Built for this portfolio</p>
+          <ul className="stack-list">
+            {BUILT_STACK.map((technology) => (
+              <li key={technology}>{technology}</li>
+            ))}
+          </ul>
+          <p className="approach-note">Project assistant planned for a later phase.</p>
+        </div>
+
+        <div className="approach-workflow">
+          <h3>How I Work</h3>
+          <ol className="workflow-list">
+            {WORKFLOW.map((step) => (
+              <li key={step.title}>
+                <h4>{step.title}</h4>
+                <p>{step.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+    </article>
+  );
+}

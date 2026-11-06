@@ -33,7 +33,9 @@ for (const path of ['/Projects/saklolo161/', '/projects/saklolo161//', '/project
       window.history.pushState(null, '', '/');
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
-    await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+    ).toBeVisible();
     await page.evaluate((path) => {
       window.history.pushState(null, '', path);
       window.dispatchEvent(new PopStateEvent('popstate'));
@@ -75,7 +77,9 @@ for (const [slug, headline] of projects) {
       window.history.pushState(null, '', '/');
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
-    await expect(page.getByRole('heading', { name: 'Denver Axel Marbida' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Building Problem-Solving Software with AI.' }),
+    ).toBeVisible();
     expect(await original?.evaluate((element) => element.isConnected)).toBe(true);
     // A client route transition proves hydration ran; a fresh document was never requested.
     await page.evaluate((path) => {
@@ -89,7 +93,7 @@ for (const [slug, headline] of projects) {
       page.getByText('Preliminary preview · Evidence pending', { exact: true }),
     ).toBeVisible();
     await expect(page.getByText('Screenshots pending', { exact: true })).toBeVisible();
-    await expect(page.getByRole('link')).toHaveCount(1);
+    await expect(page.getByRole('main').getByRole('link')).toHaveCount(1);
     await page.getByRole('link', { name: 'Back to projects' }).click();
     await expect(page).toHaveURL('/#projects');
     expect(errors).toEqual([]);

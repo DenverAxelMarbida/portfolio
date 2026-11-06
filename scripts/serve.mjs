@@ -61,6 +61,7 @@ const mimeTypes = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
+  '.woff2': 'font/woff2',
   '.pdf': 'application/pdf',
   '.apk': 'application/vnd.android.package-archive',
 };
