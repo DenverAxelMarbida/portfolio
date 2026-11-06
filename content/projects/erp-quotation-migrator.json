@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "slug": "erp-quotation-migrator",
+  "internalName": "ERP Quotation Migrator",
+  "displayName": "ERP Quotation Migrator",
+  "headline": "Turning PDF Quotations into Structured, Editable Records",
+  "headlineKind": "intended-outcome",
+  "summary": "PDF quotation extraction and Excel monitor automation.",
+  "problem": null,
+  "proposedSolution": null,
+  "intendedOutcomes": [],
+  "verifiedOutcomes": [],
+  "contributions": [],
+  "technologies": [],
+  "projectStatus": "unknown",
+  "statusEvidenceIds": [],
+  "repositories": [],
+  "liveDemos": [],
+  "apkDownloads": [],
+  "screenshots": [],
+  "architecture": null,
+  "featured": true,
+  "displayOrder": 3,
+  "publication": { "status": "published", "readiness": "preliminary" },
+  "evidence": [
+    {
+      "id": "owner-brief",
+      "kind": "owner-brief",
+      "reference": "approved-phase-1-project-brief",
+      "label": "Owner project description",
+      "checkedAt": null
+    }
+  ],
+  "authorNotes": null
+}

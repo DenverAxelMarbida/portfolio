@@ -1,6 +1,6 @@
 # Denver.dev portfolio
 
-Status: Phase 1 planning approved with the final four-project scope. The owner accepted the verified 01-01 implementation and authorized its local conventional commit on 2026-11-05, including planning and verification documentation. Pushes and later milestone execution require separate approval.
+Status: 01-01 accepted and committed; owner reports pushed. The owner authorized 01-02 on 2026-11-06, then accepted it and authorized one local acceptance commit after its implementation, automated checks, independent review and correction of all seven findings. No push or 01-03 execution is authorized.
 
 ## What This Is
 
@@ -14,14 +14,14 @@ Help visitors understand how Denver aligns software with people's and organizati
 
 ### Validated
 
-01-01's supplied-identity static HTML, same-tree hydration, local root/NotFound behavior and strict toolchain passed local verification and were accepted by the owner on 2026-11-05. Full homepage and publication requirements remain active below. Evidence: `docs/verification/phase-1.md` and `.planning/phases/01-foundation-homepage/01-01-SUMMARY.md`.
+01-01's supplied-identity static HTML, hydration, local root/NotFound behavior and strict toolchain were owner-accepted on 2026-11-05. 01-02's validated project publishing was owner-accepted on 2026-11-06; its five Important and two Minor review findings are corrected with regressions, and acceptance records that no second independent review occurred after a provider quota rejection. Full homepage requirements remain active. Evidence: `docs/verification/phase-1.md` and `docs/verification/01-02.md`.
 
 ### Active
 
 - [ ] Accessible, responsive dark homepage with restrained, purposeful animation.
 - [ ] Hanging card using the supplied original photograph, never a substitute.
-- [ ] Schema-validated project content, reusable previews and detail-page template.
-- [ ] Build-time exclusion of drafts and author-only information.
+- [x] Schema-validated project content, reusable previews and detail-page template.
+- [x] Build-time exclusion of drafts and author-only information.
 - [ ] Clear capabilities, agentic workflow, GitHub and email contact paths.
 - [ ] Static HTML, quality checks, and maintainable authoring documentation.
 
@@ -44,7 +44,7 @@ Full case studies and verified project research belong to Phase 2. GitHub API en
 ## Constraints
 
 - Work inside this clone. Preserve its remote, branch identity, and history.
-- Finalize only accepted milestone 01-01 in the explicitly authorized local commit. Keep the verified audited dependencies and lockfile. No push or later milestone execution without separate approval.
+- 01-02 is owner-accepted; one local acceptance commit is authorized. Preserve audited pins and portrait. All seven review findings are corrected; no second independent review is claimed because the follow-up was quota-blocked. No push, history changes or 01-03 execution without separate approval.
 - React, TypeScript, Vite, Tailwind CSS, Motion for React, Lucide React, ESLint, Prettier. React Router justified by public project detail URLs.
 - Free, established open-source dependencies; static hosting on a free tier.
 - No invented achievements, dates, roles, technologies, metrics, repository URLs, or product screenshots.

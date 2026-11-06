@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "slug": "bistrobuddies-promo",
+  "internalName": "BistroBuddies Promo Website",
+  "displayName": "BistroBuddies Promo Website",
+  "headline": "Making a Mobile Coffee App Easier to Discover",
+  "headlineKind": "intended-outcome",
+  "summary": "Product discovery and app promotion.",
+  "problem": null,
+  "proposedSolution": null,
+  "intendedOutcomes": [],
+  "verifiedOutcomes": [],
+  "contributions": [],
+  "technologies": [],
+  "projectStatus": "unknown",
+  "statusEvidenceIds": [],
+  "repositories": [],
+  "liveDemos": [],
+  "apkDownloads": [],
+  "screenshots": [],
+  "architecture": null,
+  "featured": true,
+  "displayOrder": 2,
+  "publication": { "status": "published", "readiness": "preliminary" },
+  "evidence": [
+    {
+      "id": "owner-brief",
+      "kind": "owner-brief",
+      "reference": "approved-phase-1-project-brief",
+      "label": "Owner project description",
+      "checkedAt": null
+    }
+  ],
+  "authorNotes": null
+}

@@ -26,7 +26,40 @@ test.describe('development URL handling', () => {
     await server?.close();
   });
 
-  for (const pathname of ['/%3Ffoo', '/%23foo']) {
+  test('author sources, originals and server bundles are inaccessible through Vite file routes', async ({
+    request,
+  }) => {
+    for (const path of [
+      'content/projects/saklolo161.json',
+      'content/media/profile/profile.jpg',
+      '.planning/STATE.md',
+      'scripts/content/schema.ts',
+      '.generated/server/entry-server.js',
+      'package.json',
+    ]) {
+      for (const url of [
+        `/${path}`,
+        `/${path}?raw`,
+        `/@fs/${resolve(path).replaceAll('\\', '/')}`,
+        `/@fs/${resolve(path).replaceAll('\\', '/')}?import`,
+        `/@id//${path}?import`,
+        `/@id//${path}?raw`,
+        `/@id/%2F${path}?raw`,
+      ]) {
+        const response = await request.get(`${origin}${url}`);
+        expect([400, 404], url).toContain(response.status());
+        expect(await response.text()).not.toContain('authorNotes');
+      }
+    }
+  });
+
+  for (const pathname of [
+    '/%3Ffoo',
+    '/%23foo',
+    '/Projects/saklolo161/',
+    '/projects/saklolo161//',
+    '/projects/saklolo161',
+  ]) {
     test(`encoded delimiter ${pathname} renders and hydrates NotFound`, async ({
       page,
       request,

@@ -2,6 +2,8 @@
 
 Status: 01-01 foundation implementation, final review corrections and verification passed locally and were owner-accepted on 2026-11-05. Pre-commit strict checks/build passed; the full Chromium suite passed 22/22 (6.0s). Local commit authorized; later milestone execution and pushes remain gated. Actual results: [`docs/verification/phase-1.md`](../../../docs/verification/phase-1.md); acceptance: [`01-01-SUMMARY.md`](01-01-SUMMARY.md).
 
+2026-11-06 update: owner authorized 01-02 after the accepted/pushed foundation, then accepted the milestone and authorized one local acceptance commit. Current automated checks pass: content validation, strict type/lint/format/build, 54 Vitest and 39 Chromium tests (zero skipped). The independent review is complete; its five Important and two Minor findings are all corrected with red-to-green regressions. Acceptance records that a focused second review of the corrections was quota-blocked, so none is claimed. No push or 01-03 execution is authorized. See [`01-02 verification`](../../../docs/verification/01-02.md) and [`acceptance SUMMARY`](01-02-SUMMARY.md). The historical command ownership below describes 01-01; 01-02 now supplies `content:check`, `content:generate`, and `test`. Generate content before standalone type/lint checks. Aggregate `check` and axe remain deferred.
+
 ## Phase-wide commands and ownership
 
 | Command | Purpose | Fails when |
@@ -14,7 +16,7 @@ Status: 01-01 foundation implementation, final review corrections and verificati
 | `npm run build` | Clean content generation, browser build, prerender, media output and artifact verification | Any failed step; missing readable HTML or draft leakage |
 | `npm run test:e2e` | Playwright against production preview, including axe | Failed/skipped required checks, browser errors or missing accessible behavior |
 
-01-01 provides `dev`, `build`, `preview`, `lint`, `format:check`, `typecheck`, and `test:e2e`; all corresponding foundation checks passed. Current build emits root/404 and browser assets; `npm run test:e2e -- --project=chromium` passed all 22 checks (20 production-foundation + 2 live-development regressions), without axe or skips. Four Windows filesystem-alias cases and two encoded-delimiter cases verify the resolved final-review findings. ESLint checks Hooks/Fast Refresh and TS rules; manual keyboard checks cover the foundation. `content:check`, `test`, and aggregate `check` are still deferred. `npm run check` will later aggregate content, lint, formatting, type checking and unit tests. Production build and browser tests follow it. Browser provisioning followed owner approval; versions and evidence are in the verification report.
+01-01 provides `dev`, `build`, `preview`, `lint`, `format:check`, `typecheck`, and `test:e2e`; all corresponding foundation checks passed. Current build emits root/404 and browser assets; `npm run test:e2e -- --project=chromium` passed all 22 checks (20 production-foundation + 2 live-development regressions), without axe or skips. Four Windows filesystem-alias cases and two encoded-delimiter cases verify the resolved final-review findings. ESLint checks Hooks/Fast Refresh and TS rules; manual keyboard checks cover the foundation. 01-02 adds `content:check`, `content:generate` and `test`; aggregate `check` remains deferred. `npm run check` will later aggregate content, lint, formatting, type checking and unit tests. Production build and browser tests follow it. Browser provisioning followed owner approval; versions and evidence are in the verification report.
 
 ## Milestone checks
 

@@ -240,7 +240,7 @@ test('raw traversal and private-file requests never expose repository files', as
   }
 });
 
-test('deployable artifacts contain only HTML and hashed browser assets', async () => {
+test('deployable artifacts contain only approved HTML and hashed browser assets', async () => {
   const files = (await readdir('dist', { recursive: true, withFileTypes: true }))
     .filter((entry) => entry.isFile())
     .map((entry) =>
@@ -250,7 +250,9 @@ test('deployable artifacts contain only HTML and hashed browser assets', async (
   expect(files).toContain('404.html');
   expect(files.length).toBeGreaterThanOrEqual(4);
   for (const file of files) {
-    expect(file).toMatch(/^(?:index\.html|404\.html|assets\/[\w-]+\.(?:js|css))$/);
+    expect(file).toMatch(
+      /^(?:index\.html|404\.html|projects\/(?:saklolo161|bistrobuddies-app|bistrobuddies-promo|erp-quotation-migrator)\/index\.html|assets\/[\w-]+\.(?:js|css))$/,
+    );
   }
 });
 

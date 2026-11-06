@@ -1,6 +1,6 @@
 # Roadmap: Denver.dev
 
-Status: Phase 1 scope approved; 01-01 implementation, final review corrections and verification complete (22 Chromium checks passed). Owner accepted 01-01 and authorized its local commit on 2026-11-05. Pushes and later milestone execution await separate authorization. Preserve the owner's five-phase scope.
+Status: 01-01 owner-accepted and committed; owner reports pushed. 01-02 owner-accepted 2026-11-06 and authorized for one local acceptance commit. No push or 01-03 execution is authorized. Preserve the owner's five-phase scope.
 
 ## Phases
 
@@ -28,8 +28,8 @@ Status: Phase 1 scope approved; 01-01 implementation, final review corrections a
 
 **Plans:** Five sequential milestones, exact task plans in `phases/01-foundation-homepage/`.
 
-- [x] 01-01-PLAN.md: Foundation and first rendered slice: locally verified, both review findings resolved, owner accepted 2026-11-05. See [acceptance SUMMARY](phases/01-foundation-homepage/01-01-SUMMARY.md), [execution](phases/01-foundation-homepage/01-01-EXECUTION.md) and [verification](../docs/verification/phase-1.md). Local commit authorized; no push or automatic advancement.
-- [ ] 01-02-PLAN.md: Validated project publishing
+- [x] 01-01-PLAN.md: Foundation and first rendered slice: locally verified, both review findings resolved, owner accepted 2026-11-05. Commit `a38cafb5416a0f8d5d98a774917b91643c5ed621`, owner reports pushed. See [acceptance SUMMARY](phases/01-foundation-homepage/01-01-SUMMARY.md).
+- [x] 01-02-PLAN.md: Validated project publishing: owner-accepted 2026-11-06 after all five Important and two Minor review findings were corrected with regressions. Acceptance records that the corrections did not receive a second independent review because the provider rejected the follow-up on quota. See [acceptance SUMMARY](phases/01-foundation-homepage/01-02-SUMMARY.md) and [verification](../docs/verification/01-02.md).
 - [ ] 01-03-PLAN.md: Responsive identity and homepage
 - [ ] 01-04-PLAN.md: Accessible motion
 - [ ] 01-05-PLAN.md: Quality gates and documentation

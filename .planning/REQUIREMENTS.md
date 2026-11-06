@@ -1,6 +1,6 @@
 # Requirements: Denver.dev
 
-Defined: 2026-11-05. Status: Phase 1 scope approved; 01-01 foundation verified and owner-accepted, with its local commit authorized. Pushes and later milestone execution remain gated.
+Defined: 2026-11-05. Status: 01-01 foundation owner-accepted and committed. 01-02 owner-accepted 2026-11-06 after independent review and correction of its five Important and two Minor findings. One local acceptance commit is authorized; no push or 01-03 execution.
 
 ## Phase 1 requirements
 
@@ -22,11 +22,11 @@ Defined: 2026-11-05. Status: Phase 1 scope approved; 01-01 foundation verified a
 
 ### Content architecture
 
-- [ ] **CONTENT-01**: Maintainer can add a project through a schema-validated file without changing card or detail components; all requested content fields are supported.
-- [ ] **CONTENT-02**: Content pipeline rejects invalid slugs, duplicate IDs, invalid links and evidence-free verified outcomes before build output is produced.
-- [ ] **CONTENT-03**: Draft entries, their media, and author-only fields are absent from generated public data, HTML, JavaScript, source maps, navigation and sitemap; future indexing must consume this same public projection.
-- [ ] **CONTENT-04**: Exactly four projects have structured source entries — Saklolo161, BistroBuddies App, BistroBuddies Promo Website, ERP Quotation Migrator — all explicitly preliminary; ReadyMama has no record, preview, route or navigation entry; no project completion status or implementation detail is invented.
-- [ ] **CONTENT-05**: Reusable preliminary project detail pages show available information, intended-outcome labeling and missing-evidence states; unavailable demos/APKs/repositories produce no dead controls.
+- [x] **CONTENT-01**: Maintainer can add a project through a schema-validated file without changing card or detail components; all requested content fields are supported.
+- [x] **CONTENT-02**: Content pipeline rejects invalid slugs, duplicate IDs, invalid links and evidence-free verified outcomes before build output is produced.
+- [x] **CONTENT-03**: Draft entries, their media, and author-only fields are absent from generated public data, HTML, JavaScript, source maps, navigation and sitemap; future indexing must consume this same public projection.
+- [x] **CONTENT-04**: Exactly four projects have structured source entries — Saklolo161, BistroBuddies App, BistroBuddies Promo Website, ERP Quotation Migrator — all explicitly preliminary; ReadyMama has no record, preview, route or navigation entry; no project completion status or implementation detail is invented.
+- [x] **CONTENT-05**: Reusable preliminary project detail pages show available information, intended-outcome labeling and missing-evidence states; unavailable demos/APKs/repositories produce no dead controls.
 
 ### Animation
 
@@ -61,7 +61,7 @@ No invented outcomes, metrics, screenshots or personal details. No red-dominant 
 
 ## Traceability
 
-Every Phase 1 ID belongs to Phase 1; milestone ownership is below. Owner-accepted 01-01 demonstrates strict tooling and local root/NotFound static rendering/hydration with the supplied public identity. FOUND-01 is completed by the authorized foundation commit containing the reviewed lockfile and acceptance SUMMARY. FOUND-02 still awaits actual published detail routes in 01-02; QUAL-07's content URL-validation portion belongs to the later publication pipeline. Those cross-milestone checkboxes remain open until their complete scope is accepted. See `docs/verification/phase-1.md` for evidence; other milestones have not started.
+Every Phase 1 ID belongs to Phase 1; milestone ownership is below. FOUND-01 is accepted in the committed foundation. The owner accepted 01-02 on 2026-11-06, completing CONTENT-01 through CONTENT-05. Automated evidence includes 54 Vitest checks and 39 Chromium checks; the independent review found five Important and two Minor issues, all corrected with red-to-green regressions. Acceptance records that a focused second review could not start because the provider rejected it on quota. FOUND-02's homepage portion and the remaining QUAL-07 boundaries stay open for later milestones. See `docs/verification/01-02.md`; 01-03 has not started.
 
 | Milestone | Requirements |
 |---|---|

@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   appType: 'custom',
   publicDir: false,
+  cacheDir: '.generated/vite',
+  optimizeDeps: { entries: ['src/entry-client.tsx'] },
   build: {
     outDir: 'dist',
     sourcemap: false,

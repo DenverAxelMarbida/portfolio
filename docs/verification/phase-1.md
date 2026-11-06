@@ -1,5 +1,7 @@
 # Phase 1 verification
 
+Current milestone evidence: [01-02 validated project publishing](01-02.md). 01-02 was owner-accepted on 2026-11-06 after its five Important and two Minor review findings were corrected with regressions. Acceptance records that no second independent review occurred after a provider quota rejection. The 01-01 section below is the historical acceptance record; the owner subsequently reported its push and authorized 01-02 on 2026-11-06.
+
 ## 01-01 — foundation implementation (2026-11-05)
 
 Status: **01-01 implementation, final review corrections and verification complete; owner accepted 2026-11-05.** Both confirmed review findings are resolved; no known in-scope code-review finding remains open. This record covers 01-01 only. The owner authorized its local conventional commit with planning and verification documentation. No push is authorized, and 01-02 has not started. Acceptance is recorded in [01-01-SUMMARY.md](../../.planning/phases/01-foundation-homepage/01-01-SUMMARY.md).

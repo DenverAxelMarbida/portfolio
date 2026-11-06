@@ -1,6 +1,7 @@
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, relative, resolve, sep } from 'node:path';
 import { createDocument } from './html.mjs';
+import { containedFile } from './content/files.ts';
 
 /** @typedef {import('vite').Connect.IncomingMessage} Request */
 /** @typedef {import('node:http').ServerResponse} Response */
@@ -57,6 +58,11 @@ const mimeTypes = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.pdf': 'application/pdf',
+  '.apk': 'application/vnd.android.package-archive',
 };
 
 /** @param {string} dist @returns {import('vite').Plugin} */
@@ -82,6 +88,10 @@ export function staticPreview(dist) {
           );
         };
         const serve = async () => {
+          if (pathname !== target.routerPath) {
+            sendNotFound();
+            return;
+          }
           let file = resolve(outputRoot, `.${pathname}`);
           try {
             const info = await stat(file);
@@ -147,7 +157,72 @@ export function staticPreview(dist) {
 export function developmentPages() {
   return {
     name: 'portfolio-development-pages',
-    configureServer(server) {
+    async configureServer(server) {
+      const root = await realpath(server.config.root);
+      const sourceRoot = await realpath(resolve(root, 'src'));
+      const dependencies = await realpath(resolve(root, 'node_modules'));
+      const cacheRoot = resolve(root, '.generated/vite');
+      const publicManifest = resolve(root, '.generated/public-content.json');
+      server.middlewares.use((request, response, next) => {
+        const guard = async () => {
+          const head = request.method === 'HEAD';
+          let pathname;
+          try {
+            pathname = decodeURIComponent((request.url ?? '/').split('?')[0] ?? '/');
+          } catch {
+            send(response, 400, 'Invalid path', 'text/plain; charset=utf-8', head);
+            return;
+          }
+          if (pathname === '/@vite/client' || pathname === '/@react-refresh') {
+            next();
+            return;
+          }
+          // This app has no virtual-module endpoints; /@id/ can also resolve raw filesystem IDs.
+          if (pathname.startsWith('/@id/')) {
+            send(response, 404, 'Not found', 'text/plain; charset=utf-8', head);
+            return;
+          }
+          if (pathname.startsWith('/media/')) {
+            const target = readRequest(request, response);
+            if (!target) return;
+            try {
+              const file = await containedFile(
+                resolve(root, '.generated/media'),
+                pathname.slice('/media/'.length),
+              );
+              const type = mimeTypes[extname(file)];
+              if (!type) throw new Error('Unsupported media');
+              send(response, 200, await readFile(file), type, head);
+            } catch {
+              send(response, 404, 'Not found', 'text/plain; charset=utf-8', head);
+            }
+            return;
+          }
+          if (isAsset(pathname) || pathname.startsWith('/@fs/')) {
+            try {
+              const candidate = pathname.startsWith('/@fs/')
+                ? pathname.slice('/@fs/'.length)
+                : resolve(root, `.${pathname}`);
+              const actual = await realpath(candidate);
+              if (
+                actual === publicManifest ||
+                actual.startsWith(`${sourceRoot}${sep}`) ||
+                actual.startsWith(`${dependencies}${sep}`) ||
+                actual.startsWith(`${cacheRoot}${sep}`)
+              ) {
+                next();
+                return;
+              }
+            } catch {
+              /* Unresolved file requests remain unavailable. */
+            }
+            send(response, 404, 'Not found', 'text/plain; charset=utf-8', head);
+            return;
+          }
+          next();
+        };
+        void guard().catch(next);
+      });
       return () => {
         server.middlewares.use((request, response, next) => {
           const target = readRequest(request, response);

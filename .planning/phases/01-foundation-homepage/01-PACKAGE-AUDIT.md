@@ -1,5 +1,13 @@
 # Package legitimacy audit — Phase 1
 
+## 01-02 installation update (2026-11-06)
+
+Owner-authorized direct development additions: `zod@4.6.7` and `vitest@5.1.0`, matching the approved versions/integrities below. Zod was already locked transitively. Registry identity/integrity checks covered every one of the 15 added Vitest graph records before installation; none was deprecated or had an install script. Strict lock-only resolution preceded strict `npm ci` (194 packages installed). All 220 existing package records and all 19 original direct pins remain unchanged.
+
+Post-install `npm ls --depth=0` reports 21 valid direct pins. Production audit: zero vulnerabilities. Full audit: the same 10 moderate affected-package entries for the accepted minimatch advisory, zero high/critical. No automatic upgrade, fix or override. Reviewed and reconfirmed lock SHA-256: `bb021167622e8b05a5cb53dd42ae8384824447cfe1ffcd37f80e0ff3306419ed`. Final review corrections and the 2026-11-06 owner acceptance changed only source, scripts, tests and documentation; no dependency, lockfile or resolution changed. See [01-02 execution](01-02-EXECUTION.md) and [verification](../../../docs/verification/01-02.md).
+
+The remaining document is the original Phase 1 approval and 01-01 installation record.
+
 Status: **01-01 REVIEWED INSTALLATION COMPLETE, 2026-11-05.** Owner authorization and registry/peer/runtime/lockfile-first checks preceded `npm ci`. All 19 direct pins and the approved transitive graph are unchanged. Post-install and final audits report zero production findings and the approved 10 moderate dev-tooling entries, zero high/critical. No pin substitutions or automatic audit fixes. Later direct dependencies remain deferred. Execution evidence is in `01-01-EXECUTION.md` and `docs/verification/phase-1.md`.
 
 Audit date: 2026-11-05. Registry: `https://registry.npmjs.org/` (official npm registry).

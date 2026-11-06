@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "slug": "bistrobuddies-app",
+  "internalName": "BistroBuddies App",
+  "displayName": "BistroBuddies App",
+  "headline": "Simplifying Coffee Ordering and Business Operations",
+  "headlineKind": "intended-outcome",
+  "summary": "Mobile coffee ordering and business operations.",
+  "problem": null,
+  "proposedSolution": null,
+  "intendedOutcomes": [],
+  "verifiedOutcomes": [],
+  "contributions": [],
+  "technologies": [],
+  "projectStatus": "unknown",
+  "statusEvidenceIds": [],
+  "repositories": [],
+  "liveDemos": [],
+  "apkDownloads": [],
+  "screenshots": [],
+  "architecture": null,
+  "featured": true,
+  "displayOrder": 1,
+  "publication": { "status": "published", "readiness": "preliminary" },
+  "evidence": [
+    {
+      "id": "owner-brief",
+      "kind": "owner-brief",
+      "reference": "approved-phase-1-project-brief",
+      "label": "Owner project description",
+      "checkedAt": null
+    }
+  ],
+  "authorNotes": null
+}

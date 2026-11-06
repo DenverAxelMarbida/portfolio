@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "slug": "saklolo161",
+  "internalName": "Saklolo161",
+  "displayName": "Saklolo161",
+  "headline": "Improving Emergency Reporting and Response Coordination",
+  "headlineKind": "intended-outcome",
+  "summary": "Emergency response and incident coordination platform.",
+  "problem": null,
+  "proposedSolution": null,
+  "intendedOutcomes": [],
+  "verifiedOutcomes": [],
+  "contributions": [],
+  "technologies": [],
+  "projectStatus": "unknown",
+  "statusEvidenceIds": [],
+  "repositories": [],
+  "liveDemos": [],
+  "apkDownloads": [],
+  "screenshots": [],
+  "architecture": null,
+  "featured": true,
+  "displayOrder": 0,
+  "publication": { "status": "published", "readiness": "preliminary" },
+  "evidence": [
+    {
+      "id": "owner-brief",
+      "kind": "owner-brief",
+      "reference": "approved-phase-1-project-brief",
+      "label": "Owner project description",
+      "checkedAt": null
+    }
+  ],
+  "authorNotes": null
+}

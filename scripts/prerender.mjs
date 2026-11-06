@@ -1,9 +1,12 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build, createServer, preview } from 'vite';
 import { createDocument } from './html.mjs';
 import { developmentPages, staticPreview } from './serve.mjs';
+import { generatePublicContent } from './content/generate.ts';
+import { cleanOutput } from './content/files.ts';
+import { checkPublicArtifacts } from './check-public-artifacts.ts';
 
 /** @typedef {typeof import('../src/entry-server')} ServerEntry */
 
@@ -12,14 +15,26 @@ const dist = resolve(root, 'dist');
 const generated = resolve(root, '.generated');
 const configFile = resolve(root, 'vite.config.ts');
 
-async function buildSite() {
-  await Promise.all([
-    rm(dist, { recursive: true, force: true }),
-    rm(generated, { recursive: true, force: true }),
-  ]);
+export async function buildPublicSite() {
+  process.env.NODE_ENV = 'production';
+  await cleanOutput(dist);
   await build({
     root,
     configFile,
+    plugins: [
+      {
+        name: 'public-browser-imports',
+        moduleParsed(module) {
+          const id = module.id.replaceAll('\\', '/');
+          if (
+            /\/(?:content\/(?:projects|media)|scripts\/content|node_modules\/zod)\//.test(id) ||
+            id.endsWith('/content/profile.json')
+          ) {
+            this.error(`Publication boundary: authoring module in browser graph: ${id}`);
+          }
+        },
+      },
+    ],
     build: { rolldownOptions: { input: resolve(root, 'src/entry-client.tsx') } },
   });
   await build({
@@ -77,24 +92,36 @@ async function buildSite() {
   const notFound = server.renderPage('/404.html');
   await writeFile(resolve(dist, '404.html'), createDocument(notFound.html, assets, 404));
   await rm(resolve(dist, '.vite'), { recursive: true, force: true });
+  await cp(resolve(generated, 'media'), resolve(dist, 'media'), { recursive: true });
   console.log(`Prerendered ${server.getStaticPaths().length} route(s) and 404.html.`);
 }
 
-switch (process.argv[2]) {
-  case 'build':
-    await buildSite();
-    break;
-  case 'preview': {
-    const server = await preview({ root, configFile, plugins: [staticPreview(dist)] });
-    server.printUrls();
-    break;
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  switch (process.argv[2]) {
+    case 'build':
+      try {
+        await cleanOutput(dist);
+        await generatePublicContent();
+        await buildPublicSite();
+        await checkPublicArtifacts();
+      } catch (error) {
+        await cleanOutput(dist);
+        throw error;
+      }
+      break;
+    case 'preview': {
+      const server = await preview({ root, configFile, plugins: [staticPreview(dist)] });
+      server.printUrls();
+      break;
+    }
+    case 'dev': {
+      await generatePublicContent();
+      const server = await createServer({ root, configFile, plugins: [developmentPages()] });
+      await server.listen();
+      server.printUrls();
+      break;
+    }
+    default:
+      throw new Error('Usage: node scripts/prerender.mjs build|dev|preview');
   }
-  case 'dev': {
-    const server = await createServer({ root, configFile, plugins: [developmentPages()] });
-    await server.listen();
-    server.printUrls();
-    break;
-  }
-  default:
-    throw new Error('Usage: node scripts/prerender.mjs build|dev|preview');
 }
