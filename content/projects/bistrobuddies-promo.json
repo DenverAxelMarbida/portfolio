@@ -17,11 +17,47 @@
   "repositories": [],
   "liveDemos": [],
   "apkDownloads": [],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "assetPath": "projects/bistrobuddies-promo/1.png",
+      "alt": "Promo hero with phone mockup",
+      "caption": null,
+      "width": 1919,
+      "height": 994,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/bistrobuddies-promo/2.png",
+      "alt": "Promo Browse section",
+      "caption": null,
+      "width": 1919,
+      "height": 992,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/bistrobuddies-promo/3.png",
+      "alt": "Promo film video section",
+      "caption": null,
+      "width": 1919,
+      "height": 991,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/bistrobuddies-promo/4.png",
+      "alt": "Promo download section",
+      "caption": null,
+      "width": 1919,
+      "height": 991,
+      "evidenceIds": ["owner-brief"]
+    }
+  ],
   "architecture": null,
   "featured": true,
   "displayOrder": 2,
-  "publication": { "status": "published", "readiness": "preliminary" },
+  "publication": {
+    "status": "published",
+    "readiness": "preliminary"
+  },
   "evidence": [
     {
       "id": "owner-brief",

@@ -17,11 +17,47 @@
   "repositories": [],
   "liveDemos": [],
   "apkDownloads": [],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "assetPath": "projects/erp-quotation-migrator/2.png",
+      "alt": "Quotation details with line items",
+      "caption": null,
+      "width": 1600,
+      "height": 825,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/erp-quotation-migrator/1.png",
+      "alt": "Quotation PDF upload screen",
+      "caption": null,
+      "width": 1919,
+      "height": 991,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/erp-quotation-migrator/3.png",
+      "alt": "Session quotations for Excel",
+      "caption": null,
+      "width": 1600,
+      "height": 827,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/erp-quotation-migrator/4.png",
+      "alt": "Generated Excel workbook",
+      "caption": null,
+      "width": 1600,
+      "height": 900,
+      "evidenceIds": ["owner-brief"]
+    }
+  ],
   "architecture": null,
   "featured": true,
   "displayOrder": 3,
-  "publication": { "status": "published", "readiness": "preliminary" },
+  "publication": {
+    "status": "published",
+    "readiness": "preliminary"
+  },
   "evidence": [
     {
       "id": "owner-brief",

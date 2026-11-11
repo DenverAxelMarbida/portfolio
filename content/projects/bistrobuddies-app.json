@@ -17,11 +17,47 @@
   "repositories": [],
   "liveDemos": [],
   "apkDownloads": [],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "assetPath": "projects/bistrobuddies-app/3.png",
+      "alt": "Customer home with coffee cards",
+      "caption": null,
+      "width": 1920,
+      "height": 1080,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/bistrobuddies-app/4.png",
+      "alt": "Product details with size options",
+      "caption": null,
+      "width": 1920,
+      "height": 1080,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/bistrobuddies-app/2.png",
+      "alt": "Login screen with Google sign-in",
+      "caption": null,
+      "width": 1920,
+      "height": 1080,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/bistrobuddies-app/1.png",
+      "alt": "App splash screen",
+      "caption": null,
+      "width": 1920,
+      "height": 1080,
+      "evidenceIds": ["owner-brief"]
+    }
+  ],
   "architecture": null,
   "featured": true,
   "displayOrder": 1,
-  "publication": { "status": "published", "readiness": "preliminary" },
+  "publication": {
+    "status": "published",
+    "readiness": "preliminary"
+  },
   "evidence": [
     {
       "id": "owner-brief",

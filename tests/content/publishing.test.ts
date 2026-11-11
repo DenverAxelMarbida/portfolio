@@ -243,6 +243,12 @@ test('initial records contain exactly the four authorized preliminary publicatio
   expect((await readdir('content/projects')).sort()).toEqual(
     slugs.map((slug) => `${slug}.json`).sort(),
   );
+  const approvedScreenshotOrder: Record<string, number[]> = {
+    saklolo161: [3, 2, 4, 1],
+    'bistrobuddies-app': [3, 4, 2, 1],
+    'bistrobuddies-promo': [1, 2, 3, 4],
+    'erp-quotation-migrator': [2, 1, 3, 4],
+  };
   for (const [index, slug] of slugs.entries()) {
     const record: unknown = JSON.parse(await readFile(`content/projects/${slug}.json`, 'utf8'));
     expect(record).toMatchObject({
@@ -254,12 +260,24 @@ test('initial records contain exactly the four authorized preliminary publicatio
       technologies: [],
       contributions: [],
       verifiedOutcomes: [],
-      screenshots: [],
       repositories: [],
       liveDemos: [],
       apkDownloads: [],
       architecture: null,
     });
+    // CP5-S: the owner-approved screenshots in their approved order, each
+    // citing the project's owner-brief evidence.
+    const screenshots = (record as { screenshots?: unknown[] }).screenshots;
+    const approvedOrder = approvedScreenshotOrder[slug] ?? [];
+    expect(
+      (screenshots as { assetPath: string; caption: null; evidenceIds: string[] }[]).map(
+        (entry) => entry.assetPath,
+      ),
+    ).toEqual(approvedOrder.map((n) => `projects/${slug}/${n}.png`));
+    for (const entry of screenshots as { caption: null; evidenceIds: string[] }[]) {
+      expect(entry.caption).toBeNull();
+      expect(entry.evidenceIds).toEqual(['owner-brief']);
+    }
   }
   await run(resolve('.'), 'scripts/content/generate.ts', 'check');
   const { validateContent, publicManifest } = await import('../../scripts/content/generate');

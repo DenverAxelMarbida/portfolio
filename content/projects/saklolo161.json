@@ -17,11 +17,47 @@
   "repositories": [],
   "liveDemos": [],
   "apkDownloads": [],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "assetPath": "projects/saklolo161/3.png",
+      "alt": "Mobile home with emergency tiles",
+      "caption": null,
+      "width": 1920,
+      "height": 1080,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/saklolo161/2.png",
+      "alt": "Dispatcher map with live alerts",
+      "caption": null,
+      "width": 512,
+      "height": 265,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/saklolo161/4.png",
+      "alt": "Dispatch tracker with timeline",
+      "caption": null,
+      "width": 1920,
+      "height": 1080,
+      "evidenceIds": ["owner-brief"]
+    },
+    {
+      "assetPath": "projects/saklolo161/1.png",
+      "alt": "Dispatcher login screen",
+      "caption": null,
+      "width": 1919,
+      "height": 989,
+      "evidenceIds": ["owner-brief"]
+    }
+  ],
   "architecture": null,
   "featured": true,
   "displayOrder": 0,
-  "publication": { "status": "published", "readiness": "preliminary" },
+  "publication": {
+    "status": "published",
+    "readiness": "preliminary"
+  },
   "evidence": [
     {
       "id": "owner-brief",

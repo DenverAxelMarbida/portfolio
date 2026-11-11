@@ -7,6 +7,7 @@ import { developmentPages, staticPreview } from './serve.mjs';
 import { generatePublicContent } from './content/generate.ts';
 import { cleanOutput } from './content/files.ts';
 import { checkPublicArtifacts } from './check-public-artifacts.ts';
+import { enforceBundleBudget } from './check-bundle-budget.ts';
 
 /** @typedef {typeof import('../src/entry-server')} ServerEntry */
 
@@ -56,6 +57,7 @@ export async function buildPublicSite() {
   );
   const entry = manifest['src/entry-client.tsx'];
   if (!entry) throw new Error('Browser entry is missing from the Vite manifest.');
+  await enforceBundleBudget(manifest, dist);
   const styles = new Set();
   const preloads = new Set();
   const seen = new Set();

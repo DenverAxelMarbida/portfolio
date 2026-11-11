@@ -1,5 +1,7 @@
 import { useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from 'react';
 import { manifest } from '../content/manifest';
+import { useMotionPreferences } from '../components/motion/MotionPreferences';
+import { StartupIndicator } from '../components/motion/StartupIndicator';
 
 const NAVIGATION = [
   { label: 'Projects', href: '/#projects' },
@@ -21,6 +23,36 @@ const readServerMobile = () => false;
 const subscribeToHydration = () => () => {};
 const readHydrated = () => true;
 const readServerHydrated = () => false;
+
+function MotionControl() {
+  const { hydrated, reduced, paused, setPaused } = useMotionPreferences();
+  if (!hydrated) return null;
+
+  const label = reduced ? 'Reduced motion on' : paused ? 'Resume animations' : 'Pause animations';
+  const status = reduced
+    ? 'Your system reduced-motion preference keeps ambient motion off.'
+    : paused
+      ? 'Ambient motion is paused.'
+      : 'Ambient motion is on.';
+
+  return (
+    <div className="footer-motion">
+      <button
+        type="button"
+        className="motion-toggle"
+        aria-pressed={!reduced && paused}
+        aria-describedby="motion-status"
+        disabled={reduced}
+        onClick={() => setPaused(!paused)}
+      >
+        {label}
+      </button>
+      <p id="motion-status" className="motion-status" aria-live="polite">
+        {status}
+      </p>
+    </div>
+  );
+}
 
 function focusDestination(href: string) {
   const hash = href.split('#')[1];
@@ -67,6 +99,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
                 .dev
               </span>
             </a>
+            <StartupIndicator />
             {showToggle && (
               <button
                 ref={toggleRef}
@@ -111,6 +144,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <a href={`mailto:${manifest.profile.email}`}>{manifest.profile.email}</a>
             <a href={manifest.profile.github}>GitHub profile</a>
           </div>
+          <MotionControl />
         </div>
       </footer>
     </>

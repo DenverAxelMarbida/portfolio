@@ -16,6 +16,13 @@
   --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 }
 
+@keyframes startup-indicator-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
 @layer base {
   :root {
     color-scheme: dark;
@@ -23,6 +30,9 @@
     --section-space: 64px;
     --radius-control: 8px;
     --radius-card: 12px;
+    /* Fallback strap length and the shell-local gap above the card; on wide
+       layouts the strap length is measured at runtime instead. */
+    --profile-lanyard-length: 150px;
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 1.6;
@@ -55,6 +65,18 @@
     min-height: 100vh;
     margin: 0;
     background-color: var(--color-background);
+  }
+
+  .site-header,
+  .site-main,
+  .site-footer {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* The lanyard may swing to the viewport edge; never make the page scroll. */
+  .site-main {
+    overflow-x: clip;
   }
 
   h1,
@@ -155,6 +177,9 @@
   }
 
   .site-header {
+    /* Above .site-main so the lanyard entering from the page top disappears
+       behind the opaque header instead of painting over the navigation. */
+    z-index: 2;
     border-bottom: 1px solid var(--color-border-subtle);
     background-color: var(--color-background);
   }
@@ -182,6 +207,26 @@
 
   .brand-mark {
     color: var(--color-muted);
+  }
+
+  .startup-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: startup-indicator-failsafe 0ms linear 3s forwards;
+  }
+
+  .startup-indicator-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
   }
 
   .nav-toggle {
@@ -300,14 +345,53 @@
     margin-top: 24px;
   }
 
+  /* One-shot hero copy entrance.
+   Owner-approved CP4 settings: 18px over 500ms with a
+   100ms stagger. Final states remain fully readable.
+   Server-rendered markup never starts hidden. */
+
+  [data-hero-entrance='playing'] [data-hero-entrance-item] {
+    animation: hero-entrance-rise 500ms ease-out both;
+  }
+
+  [data-hero-entrance='playing'] [data-hero-entrance-item='1'] {
+    animation-delay: 100ms;
+  }
+
+  [data-hero-entrance='playing'] [data-hero-entrance-item='2'] {
+    animation-delay: 200ms;
+  }
+
+  @keyframes hero-entrance-rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Reduced motion and the shared pause policy keep the copy at rest. */
+  @media (prefers-reduced-motion: reduce) {
+    [data-hero-entrance='playing'] [data-hero-entrance-item] {
+      animation: none;
+    }
+  }
+
+  html[data-motion-policy='paused'] [data-hero-entrance-item] {
+    animation: none;
+  }
+
   .hero-motif {
     position: absolute;
-    inset: -24px 0 auto;
+    inset: 40px 0 auto;
     height: 420px;
     z-index: 0;
     overflow: hidden;
-    color: var(--color-border-subtle);
-    opacity: 0.55;
+    color: #9aa3ad;
     pointer-events: none;
   }
 
@@ -316,13 +400,37 @@
     height: 100%;
   }
 
+  .hero-motif-canvas {
+    display: none;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero-motif[data-constellation-mode='canvas'] .hero-motif-canvas {
+    display: block;
+  }
+
+  .hero-motif[data-constellation-mode='canvas'] .hero-motif-fallback {
+    display: none;
+  }
+
   .hero-motif line {
-    stroke: currentColor;
+    stroke: rgba(176, 182, 192, 0.5);
     stroke-width: 1;
   }
 
+  .hero-motif line.hero-motif-line-glow {
+    stroke: rgba(138, 144, 154, 0.16);
+    stroke-width: 3.2;
+    stroke-linecap: round;
+  }
+
   .hero-motif circle {
-    fill: currentColor;
+    fill: rgba(200, 208, 218, 0.8);
+  }
+
+  .hero-motif circle.hero-motif-star-halo {
+    fill: rgba(184, 192, 202, 0.12);
   }
 
   .button {
@@ -363,36 +471,85 @@
     width: 100%;
     max-width: 280px;
     margin-inline: auto;
-    padding-top: 32px;
+    /* Reserved gap above the card on stacked layouts; the strap root moves to
+       the document top on wide layouts. */
+    padding-top: var(--profile-lanyard-length);
   }
 
-  .profile-card-hanger {
+  .profile-card-lanyard {
     position: absolute;
     top: 0;
     left: 50%;
-    width: 2px;
-    height: 32px;
-    background-color: var(--color-border-control);
+    width: 1px;
+    height: 1px;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .profile-card-lanyard-svg {
+    display: block;
+    width: 1px;
+    height: 1px;
+    overflow: visible;
+  }
+
+  .profile-card-strap {
+    fill: none;
+    stroke: var(--color-border-control);
+    stroke-width: 6;
+    stroke-linecap: round;
+  }
+
+  .profile-card-stitch {
+    fill: none;
+    stroke: var(--color-background);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-dasharray: 4 6;
   }
 
   .profile-card-ring {
     position: absolute;
     top: -5px;
-    left: 50%;
+    left: -5px;
     width: 10px;
     height: 10px;
     border: 2px solid var(--color-border-control);
     border-radius: 50%;
     background-color: var(--color-background);
-    transform: translateX(-50%);
   }
 
   .profile-card {
+    position: relative;
     padding: 12px;
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-card);
     background-color: var(--color-card);
     box-shadow: 0 24px 60px rgb(0 0 0 / 45%);
+    cursor: grab;
+    touch-action: none;
+    transform-origin: 50% 0;
+    will-change: transform;
+  }
+
+  .profile-card-clip {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 14px;
+    height: 24px;
+    border: 2px solid var(--color-border-control);
+    border-radius: 5px;
+    background-color: var(--color-card);
+    box-shadow: inset 0 0 0 2px rgb(0 0 0 / 25%);
+    transform: translateX(-50%);
+  }
+
+  .profile-card-shell[data-profile-drag='dragging'] .profile-card {
+    cursor: grabbing;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .profile-card-photo {
@@ -410,6 +567,8 @@
     height: auto;
     object-fit: contain;
     filter: none;
+    user-select: none;
+    -webkit-user-drag: none;
   }
 
   .profile-card-fallback {
@@ -448,6 +607,20 @@
     }
   }
 
+  .page-starfield {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .page-starfield-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
   .page-section {
     margin-top: var(--section-space);
     scroll-margin-top: 24px;
@@ -478,6 +651,38 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-card);
     background-color: var(--color-card);
+    transition:
+      transform 180ms ease-out,
+      border-color 180ms ease-out;
+  }
+
+  /* Keyboard focus receives the same feedback as hover, on every pointer class. */
+  .project-card:focus-within {
+    transform: translateY(-3px);
+    border-color: var(--color-border-control);
+  }
+
+  /* The pointer lift is a fine-pointer enhancement only; coarse pointers never move. */
+  @media (hover: hover) and (pointer: fine) {
+    .project-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--color-border-control);
+    }
+  }
+
+  /* Reduced motion and the shared pause policy keep the card at rest; border feedback stays. */
+  @media (prefers-reduced-motion: reduce) {
+    .project-card:hover,
+    .project-card:focus-within {
+      transform: none;
+      transition: none;
+    }
+  }
+
+  html[data-motion-policy='paused'] .project-card:hover,
+  html[data-motion-policy='paused'] .project-card:focus-within {
+    transform: none;
+    transition: none;
   }
 
   .project-card h3 a {
@@ -511,6 +716,7 @@
   }
 
   .project-media-figure {
+    position: relative;
     margin: 0;
   }
 
@@ -521,20 +727,102 @@
     border-radius: var(--radius-control);
   }
 
-  .project-media-controls {
+  /* Carousel chrome, present only after the deferred runtime upgrades the
+     markup: the figure clips the track and owns one stable aspect ratio, so
+     slides letterbox with contain — no crop, no between-slide layout shift. */
+  .project-media[data-carousel-count] .project-media-figure {
+    overflow: hidden;
+    border-radius: var(--radius-control);
+    /* Vertical panning stays with the page: touch swipes scroll, horizontal
+       swipes stay pointer-driven. No scroll lock, ever. */
+    touch-action: pan-y;
+  }
+
+  .project-media-track {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    width: 100%;
+    transition: transform 320ms ease-out;
+  }
+
+  /* Motion policies swap slides instantly: only the transition is removed —
+     the transform itself stays live, so manual navigation never breaks. */
+  @media (prefers-reduced-motion: reduce) {
+    .project-media-track {
+      transition: none;
+    }
+  }
+
+  html[data-motion-policy='paused'] .project-media-track {
+    transition: none;
+  }
+
+  .project-media-slide {
+    flex: 0 0 100%;
+    min-width: 0;
+  }
+
+  .project-media-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-control);
+  }
+
+  /* Pagination dots: padded buttons give a 44px hit area around a small dot;
+     the global :focus-visible ring covers keyboard focus. The row is centered
+     under the media box (owner-approved 2026-11-11). */
+  .project-media-dots {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
     margin-top: 12px;
   }
 
-  .project-media-controls button {
+  .project-media-dots button {
+    display: grid;
+    place-items: center;
+    min-width: 44px;
     min-height: 44px;
-    padding: 8px 12px;
-    border: 1px solid var(--color-border-control);
-    border-radius: var(--radius-control);
-    background-color: transparent;
-    color: var(--color-foreground);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .project-media-dots button::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-border-control);
+  }
+
+  .project-media-dots button[aria-current='true']::before {
+    background: var(--color-foreground);
+  }
+
+  /* Visible caption: only the active screenshot's description, mirroring the
+     controller's position changes. Centered to sit under the media box. */
+  .project-media-caption {
+    margin: 8px 0 0;
+    color: var(--color-muted);
+    text-align: center;
+  }
+
+  /* Screen-reader-only live region: announces "Slide X of Y" on manual
+     navigation without occupying any visible space. */
+  .project-media-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .project-media-empty {
@@ -679,6 +967,43 @@
     flex-direction: column;
     gap: 4px;
     align-items: flex-start;
+  }
+
+  .footer-motion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    max-width: 18rem;
+  }
+
+  .motion-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 16px;
+    border: 1px solid var(--color-border-control);
+    border-radius: var(--radius-control);
+    background-color: transparent;
+    color: var(--color-foreground);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .motion-toggle:hover:enabled {
+    background-color: var(--color-card);
+  }
+
+  .motion-toggle:disabled {
+    border-color: var(--color-border-subtle);
+    color: var(--color-muted);
+    cursor: not-allowed;
+  }
+
+  .motion-status {
+    color: var(--color-muted);
+    font-size: 0.875rem;
   }
 
   #contact {

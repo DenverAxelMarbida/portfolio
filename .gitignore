@@ -3,6 +3,9 @@ dist/
 .generated/
 playwright-report/
 test-results/
+# Local headed-verification artifacts and scratch logs (never committed)
+.tmp-*/
+.tmp-*.log
 .env
 .env.*
 !.env.example

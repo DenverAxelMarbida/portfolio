@@ -2,6 +2,9 @@ import type { PublicManifest } from '../../scripts/content/schema';
 import { getPublishedProjects } from '../content/selectors';
 import { ProfileCard } from '../components/hero/ProfileCard';
 import { ProjectCard } from '../components/projects/ProjectCard';
+import { ConstellationBackground } from '../components/motion/ConstellationBackground';
+import { PageStarfieldBackground } from '../components/motion/PageStarfieldBackground';
+import { HeroEntrance } from '../components/motion/HeroEntrance';
 
 const BUILT_STACK = [
   'React',
@@ -41,32 +44,6 @@ const WORKFLOW = [
   },
 ] as const;
 
-const MOTIF_NODES = [
-  [60, 120],
-  [180, 60],
-  [300, 140],
-  [430, 70],
-  [540, 160],
-  [120, 280],
-  [260, 300],
-  [400, 260],
-  [520, 330],
-  [330, 40],
-] as const;
-
-const MOTIF_LINKS = [
-  [0, 1],
-  [1, 2],
-  [2, 3],
-  [3, 4],
-  [0, 5],
-  [5, 6],
-  [6, 7],
-  [7, 8],
-  [2, 6],
-  [1, 9],
-] as const;
-
 export function HomePage({ manifest }: { manifest: PublicManifest }) {
   const { profile } = manifest;
   const projects = getPublishedProjects(manifest);
@@ -74,26 +51,21 @@ export function HomePage({ manifest }: { manifest: PublicManifest }) {
 
   return (
     <article className="home">
+      <PageStarfieldBackground />
       <section className="hero" aria-labelledby="hero-heading">
-        <div className="hero-motif" aria-hidden="true">
-          <svg viewBox="0 0 600 400" focusable="false">
-            {MOTIF_LINKS.map(([from, to]) => {
-              const start = MOTIF_NODES[from] as readonly [number, number];
-              const end = MOTIF_NODES[to] as readonly [number, number];
-              return (
-                <line key={`${from}-${to}`} x1={start[0]} y1={start[1]} x2={end[0]} y2={end[1]} />
-              );
-            })}
-            {MOTIF_NODES.map(([cx, cy]) => (
-              <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="2.5" />
-            ))}
-          </svg>
-        </div>
-        <div className="hero-copy">
+        <ConstellationBackground />
+
+        <HeroEntrance>
           <p className="hero-eyebrow">{profile.title}</p>
-          <h1 id="hero-heading">{headline}</h1>
-          {profile.introduction && <p className="hero-intro">{profile.introduction}</p>}
-          <div className="hero-actions">
+          <h1 id="hero-heading" data-hero-entrance-item="0">
+            {headline}
+          </h1>
+          {profile.introduction && (
+            <p className="hero-intro" data-hero-entrance-item="1">
+              {profile.introduction}
+            </p>
+          )}
+          <div className="hero-actions" data-hero-entrance-item="2">
             <a className="button button-primary" href="#projects">
               Explore My Projects
             </a>
@@ -101,7 +73,7 @@ export function HomePage({ manifest }: { manifest: PublicManifest }) {
               View GitHub
             </a>
           </div>
-        </div>
+        </HeroEntrance>
         <ProfileCard profile={profile} />
       </section>
 

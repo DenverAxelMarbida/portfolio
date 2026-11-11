@@ -6,6 +6,43 @@ Owner-authorized direct development additions: `zod@4.6.7` and `vitest@5.1.0`, m
 
 Post-install `npm ls --depth=0` reports 21 valid direct pins. Production audit: zero vulnerabilities. Full audit: the same 10 moderate affected-package entries for the accepted minimatch advisory, zero high/critical. No automatic upgrade, fix or override. Reviewed and reconfirmed lock SHA-256: `bb021167622e8b05a5cb53dd42ae8384824447cfe1ffcd37f80e0ff3306419ed`. Final review corrections and the 2026-11-06 owner acceptance changed only source, scripts, tests and documentation; no dependency, lockfile or resolution changed. See [01-02 execution](01-02-EXECUTION.md) and [verification](../../../docs/verification/01-02.md).
 
+## 01-04 Motion installation update (2026-11-07)
+
+Owner-authorized CP1-A addition: `motion@14.10.1`, exact pin, for the approved imperative `animate()` runtime. The original later-milestone table listed `14.9.1`; `14.10.1` was the current patch at execution and was explicitly approved. No other direct pin or existing resolution changed.
+
+### Registry verification
+
+| Package | Version | License | Published | Deprecated | Install lifecycle | Attestations |
+|---|---|---|---|---|---|---|
+| `motion` | `14.10.1` | MIT | 2026-11-06T14:25:26.082Z | no | none | none |
+| `framer-motion` | `14.10.1` | MIT | 2026-11-06T14:24:50.849Z | no | none | none |
+| `motion-dom` | `14.10.1` | MIT | 2026-11-06T14:27:12.698Z | no | none | none |
+| `motion-utils` | `14.7.0` | MIT | 2026-10-27T09:53:52.993Z | no | none | none |
+| `tslib` | `2.9.1` | 0BSD | 2026-10-30T20:20:28.741Z | no | none | none |
+
+All five records matched their lockfile versions, resolved tarballs and SHA-512 integrities against `https://registry.npmjs.org/`. `motion` peers `react`, `react-dom` and `remix` are all optional; React `19.3.1` satisfies the declared peer range. `motion` is `sideEffects: false` and depends on `framer-motion@14.10.1` and `tslib ^2.4.0`; `framer-motion` depends on `motion-dom@14.10.1` and `motion-utils@14.7.0`. The only `tslib` already present was the bundled `2.8.1` under `@tailwindcss/oxide-wasm32-wasi`; that nested copy is unchanged. Exact integrity values are recorded in [01-04-DEPENDENCY-VERIFICATION.json](01-04-DEPENDENCY-VERIFICATION.json).
+
+Residual risk: `motion` and `framer-motion` `14.10.1` were published on 2026-11-06, less than 24 hours before installation. The exact pin, the official `motiondivision/motion` repository and the unchanged audit result reduce exposure, but release recency remains a supply-chain observation rather than a verified source audit.
+
+### Installation and audit
+
+Lockfile-first resolution (`npm install --package-lock-only --ignore-scripts`) preceded a full `npm ci`. It added 201 packages and audited 208. `npm ls --depth=0` reports 23 valid direct pins: 4 runtime and 19 development. Production audit: zero vulnerabilities. Full audit: the same 10 moderate dev-tooling entries for the accepted minimatch advisory, zero high/critical. No `npm audit fix`, force, override or pin substitution was used. Lockfile SHA-256: `c70d68e99e413e67193a71bebb8753ca647002e812e9e39a64c4707510d2d9a1`.
+
+### Bundle and runtime evidence
+
+`scripts/check-bundle-budget.ts` now enforces decimal gzip budgets during `scripts/prerender.mjs`, after the Vite manifest is read and before `dist/.vite` is removed: initial JS ≤95,000 B, each deferred chunk ≤30,000 B, initial CSS ≤8,000 B, total JS ≤200,000 B. It traverses static imports and dynamic imports without double counting shared chunks. `tests/motion/budget.test.ts` covers traversal, missing chunks, real gzip measurement, exact limits and each failure gate.
+
+| Measurement | Gzip bytes | Budget |
+|---|---:|---:|
+| Project initial JS (`assets/entry-client-BlwuAzw5.js`, hash unchanged from 01-03) | 85,174 | 95,000 |
+| Project initial CSS | 3,935 | 8,000 |
+| Deferred `animate()` chunk in isolated Vite 8.3.6 build | 25,332 (71,265 raw) | 30,000 |
+| Projected total JS with that chunk | 110,506 | 200,000 |
+
+`motion/react`, `motion` and `framer-motion` produced the identical deferred chunk, so the approved `motion/react` import path adds no measurable penalty. The chunk is only paid when the dynamic import runs; the static build remains byte-identical to 01-03.
+
+A Playwright/Chromium probe verified the CP1-B contract for pause: `animate()` from `motion/react` starts synchronously from the readable hero opacity (`0.9`, first frame `0.904421`), and `controls.stop()` freezes the running animation at `x=52.9`, `opacity=0.779583`; samples 400 ms later were identical and state was `idle`. `finished` remained pending 300 ms after `stop()`, so pause must not await it. Full values are in the dependency-verification record.
+
 The remaining document is the original Phase 1 approval and 01-01 installation record.
 
 Status: **01-01 REVIEWED INSTALLATION COMPLETE, 2026-11-05.** Owner authorization and registry/peer/runtime/lockfile-first checks preceded `npm ci`. All 19 direct pins and the approved transitive graph are unchanged. Post-install and final audits report zero production findings and the approved 10 moderate dev-tooling entries, zero high/critical. No pin substitutions or automatic audit fixes. Later direct dependencies remain deferred. Execution evidence is in `01-01-EXECUTION.md` and `docs/verification/phase-1.md`.

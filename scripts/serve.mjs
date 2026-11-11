@@ -204,13 +204,32 @@ export function developmentPages() {
               const candidate = pathname.startsWith('/@fs/')
                 ? pathname.slice('/@fs/'.length)
                 : resolve(root, `.${pathname}`);
-              const actual = await realpath(candidate);
-              if (
-                actual === publicManifest ||
-                actual.startsWith(`${sourceRoot}${sep}`) ||
-                actual.startsWith(`${dependencies}${sep}`) ||
-                actual.startsWith(`${cacheRoot}${sep}`)
-              ) {
+              let actual = null;
+              try {
+                actual = await realpath(candidate);
+              } catch {
+                /* Absent files fall through to the lexical check below: the dep
+                   optimizer may still be writing the requested deps chunk, and
+                   Vite's own middleware knows how to wait for it (or 404). */
+              }
+              if (actual) {
+                if (
+                  actual === publicManifest ||
+                  actual.startsWith(`${sourceRoot}${sep}`) ||
+                  actual.startsWith(`${dependencies}${sep}`) ||
+                  actual.startsWith(`${cacheRoot}${sep}`)
+                ) {
+                  next();
+                  return;
+                }
+                send(response, 404, 'Not found', 'text/plain; charset=utf-8', head);
+                return;
+              }
+              const lexicallyAppOwned =
+                candidate.startsWith(`${cacheRoot}${sep}`) ||
+                candidate.startsWith(`${sourceRoot}${sep}`) ||
+                candidate.startsWith(`${dependencies}${sep}`);
+              if (lexicallyAppOwned) {
                 next();
                 return;
               }

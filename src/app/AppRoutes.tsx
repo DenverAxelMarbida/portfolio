@@ -5,6 +5,7 @@ import { manifest } from '../content/manifest';
 import { HomePage } from '../pages/HomePage';
 import { getProjectBySlug } from '../content/selectors';
 import { ProjectMedia } from '../components/projects/ProjectMedia';
+import { MotionPreferencesProvider } from '../components/motion/MotionPreferences';
 import type { Claim } from '../../scripts/content/schema';
 
 function NotFound() {
@@ -163,8 +164,10 @@ function RouteContent() {
 
 export function AppRoutes() {
   return (
-    <SiteLayout>
-      <RouteContent />
-    </SiteLayout>
+    <MotionPreferencesProvider>
+      <SiteLayout>
+        <RouteContent />
+      </SiteLayout>
+    </MotionPreferencesProvider>
   );
 }

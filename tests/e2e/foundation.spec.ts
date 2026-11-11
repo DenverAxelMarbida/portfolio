@@ -271,7 +271,7 @@ test('deployable artifacts contain only approved HTML and hashed browser assets'
   expect(files.length).toBeGreaterThanOrEqual(4);
   for (const file of files) {
     expect(file).toMatch(
-      /^(?:index\.html|404\.html|projects\/(?:saklolo161|bistrobuddies-app|bistrobuddies-promo|erp-quotation-migrator)\/index\.html|assets\/[\w-]+\.(?:js|css|woff2)|media\/profile\/profile\.jpg|licenses\/ibm-plex-sans-OFL\.txt)$/,
+      /^(?:index\.html|404\.html|projects\/(?:saklolo161|bistrobuddies-app|bistrobuddies-promo|erp-quotation-migrator)\/index\.html|assets\/[\w-]+\.(?:js|css|woff2)|media\/profile\/profile\.jpg|media\/projects\/(?:saklolo161|bistrobuddies-app|bistrobuddies-promo|erp-quotation-migrator)\/[1-4]\.png|licenses\/ibm-plex-sans-OFL\.txt)$/,
     );
   }
 });

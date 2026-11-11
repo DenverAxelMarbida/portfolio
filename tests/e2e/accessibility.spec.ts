@@ -25,6 +25,35 @@ function describeViolations(
 }
 
 async function expectNoWcagViolations(page: Page) {
+  // The hero entrance is a one-shot staggered fade; axe must sample the
+  // settled page, not an in-flight ~48%-opacity frame (previously produced a
+  // spurious `.button-primary` color-contrast violation under parallel load).
+  // Routes without an entrance have no attribute and resolve immediately.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const phase = document
+          .querySelector('[data-hero-entrance]')
+          ?.getAttribute('data-hero-entrance');
+        if (!(
+          phase === undefined ||
+          phase === 'played' ||
+          phase === 'settled' ||
+          phase === 'skipped'
+        ))
+          return false;
+        // Axe must sample the hydrated carousels: every media root that
+        // declared slides must have its controller attached by now. Routes
+        // without media (404) resolve immediately.
+        const media = Array.from(document.querySelectorAll('.project-media'));
+        const hydratable = media.filter((element) => element.hasAttribute('data-carousel-count'));
+        return (
+          media.length === 0 ||
+          hydratable.every((element) => element.hasAttribute('data-carousel-active'))
+        );
+      }),
+    )
+    .toBe(true);
   const results = await new AxeBuilder({ page }).withTags(wcagTags).analyze();
   expect(results.violations, describeViolations(results.violations)).toEqual([]);
 }

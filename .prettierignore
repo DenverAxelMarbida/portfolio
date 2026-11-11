@@ -7,3 +7,4 @@ package-lock.json
 .planning/
 docs/
 content/media/
+.tmp-*/
