@@ -6,6 +6,7 @@ import {
   LANYARD_CONFIG,
   createLanyardConfig,
   deriveLanyardAnchorGeometry,
+  detectWebgl,
   isLanyardSettled,
   lanyardCardTransform,
   lanyardDropState,
@@ -19,6 +20,7 @@ import {
   type LanyardConfig,
   type LanyardState,
 } from '../motion/profileCardMotion';
+import type { Lanyard3dBridge } from '../../lanyard3d';
 
 const MOBILE_QUERY = '(max-width: 767px)';
 const WIDE_QUERY = '(min-width: 1024px)';
@@ -65,11 +67,21 @@ const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : us
 
 export function ProfileCard({ profile }: { profile: Profile }) {
   const [failed, setFailed] = useState(false);
-  const { hydrated, motionAllowed } = useMotionPreferences();
+  const { hydrated, reduced, motionAllowed } = useMotionPreferences();
   const mobile = useSyncExternalStore(subscribeMobile, readMobile, readServerMobile);
+  // Which lanyard implementation renders. Defaults to the DOM lanyard (SSR +
+  // reduced motion); evaluated once after hydration, reactive to reduced
+  // motion but deliberately NOT to the transient paused flag — the Pause
+  // button freezes the active implementation through its animation control.
+  const [lanyardMode, setLanyardMode] = useState<'dom' | '3d'>('dom');
   const shellRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const lanyardRef = useRef<HTMLDivElement | null>(null);
+  const lanyard3dRef = useRef<HTMLDivElement | null>(null);
+  const lanyard3dBridgeRef = useRef<Lanyard3dBridge | null>(null);
+  // Read by the asynchronous mount completion: a bridge that finishes
+  // mounting while motion is already disallowed must start paused.
+  const motionAllowedRef = useRef(motionAllowed);
   const strapRef = useRef<SVGPathElement | null>(null);
   const stitchRef = useRef<SVGPathElement | null>(null);
   const clockRef = useRef<ProfileCardClock>({
@@ -82,6 +94,89 @@ export function ProfileCard({ profile }: { profile: Profile }) {
   });
   const image = profile.image;
 
+  useEffect(() => {
+    if (!hydrated) return;
+    // One-shot environment decision after hydration: `?lanyard=dom|3d` forces
+    // a mode for testing and owner review, otherwise reduced motion or missing
+    // WebGL keeps the DOM lanyard. Deliberately not reactive to the transient
+    // paused flag; the Pause button freezes the active implementation through
+    // its animation control.
+    const forced = new URLSearchParams(window.location.search).get('lanyard');
+    if (forced === '3d' || forced === 'dom') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time post-hydration environment probe, not an external-system sync
+      setLanyardMode(forced);
+      return;
+    }
+    setLanyardMode(!reduced && detectWebgl() ? '3d' : 'dom');
+  }, [hydrated, reduced]);
+
+  useEffect(() => {
+    motionAllowedRef.current = motionAllowed;
+  }, [motionAllowed]);
+
+  // Mount/unmount the lazy 3D prototype. `lanyard3d` (three + R3F) is only
+  // ever imported dynamically so the initial bundle stays lean.
+  useIsomorphicLayoutEffect(() => {
+    if (!hydrated || lanyardMode !== '3d') return;
+    const hostElement = lanyard3dRef.current;
+    const shellElement = shellRef.current;
+    const cardElement = cardRef.current;
+    if (!hostElement || !shellElement || !cardElement) return;
+    const host: HTMLDivElement = hostElement;
+    const shell: HTMLDivElement = shellElement;
+    const card: HTMLDivElement = cardElement;
+
+    let cancelled = false;
+    let bridge: Lanyard3dBridge | null = null;
+    import('../../lanyard3d')
+      .then(({ mountLanyard3d }) => {
+        if (cancelled) return;
+        bridge = mountLanyard3d(host, { shell, card });
+        if (!bridge) {
+          // Layout measurement failed; keep the working DOM lanyard.
+          setLanyardMode('dom');
+          return;
+        }
+        const active = bridge;
+        lanyard3dBridgeRef.current = active;
+        registerMotionAnimationControl({ stop: () => active.pause(), settle: () => active.settle() });
+        if (!motionAllowedRef.current) {
+          active.pause();
+          active.settle();
+        }
+      })
+      .catch(() => {
+        // Chunk load failure (offline, deploy race): keep the working DOM lanyard.
+        if (!cancelled) setLanyardMode('dom');
+      });
+
+    return () => {
+      cancelled = true;
+      bridge?.dispose();
+      lanyard3dBridgeRef.current = null;
+    };
+  }, [hydrated, lanyardMode]);
+
+  // Pause/resume plumbing: the preference toggle (not the Pause button, which
+  // goes through the animation control above) freezes or releases the canvas.
+  // Resume must also re-register the control: pauseMotionAnimations() clears
+  // the registry, so without this the next Pause would never reach the bridge.
+  useIsomorphicLayoutEffect(() => {
+    if (lanyardMode !== '3d') return;
+    const bridge = lanyard3dBridgeRef.current;
+    if (!bridge) return;
+    if (!motionAllowed) {
+      bridge.pause();
+      bridge.settle();
+      return;
+    }
+    bridge.resume();
+    return registerMotionAnimationControl({
+      stop: () => bridge.pause(),
+      settle: () => bridge.settle(),
+    });
+  }, [motionAllowed, lanyardMode]);
+
   useIsomorphicLayoutEffect(() => {
     const shellElement = shellRef.current;
     const cardElement = cardRef.current;
@@ -89,6 +184,22 @@ export function ProfileCard({ profile }: { profile: Profile }) {
     // Aliases give the nested handlers a guaranteed non-null type without assertions.
     const shell: HTMLDivElement = shellElement;
     const card: HTMLDivElement = cardElement;
+
+    // In 3D mode the DOM simulation is disabled entirely: the lazy canvas
+    // host owns presentation (see the mount effect above) while the DOM card
+    // stays in the layout, hidden by CSS, so its geometry remains measurable.
+    if (lanyardMode === '3d') {
+      // The flash-run DOM simulation is torn down mid-swing by the mode flip,
+      // leaving a stale transform on the hidden card; clear it so the hidden
+      // card rests at its layout position for geometry measurement.
+      if (!motionAllowed) {
+        shell.dataset.profileMotion = 'static';
+        shell.dataset.profilePhase = 'static';
+        shell.dataset.profileDrag = 'idle';
+      }
+      card.style.transform = '';
+      return;
+    }
 
     const strap = strapRef.current;
     const stitch = stitchRef.current;
@@ -499,7 +610,10 @@ export function ProfileCard({ profile }: { profile: Profile }) {
       releasePointerCapture();
       dragging = false;
     };
-  }, [hydrated, motionAllowed, mobile]);
+    // `lanyardMode` is a dependency so the mode flip to 3d tears the hidden
+    // DOM simulation down: without it the flash-run loop keeps stepping and
+    // writing `data-profile-phase`, fighting the 3d host's phase writes.
+  }, [hydrated, motionAllowed, mobile, lanyardMode]);
 
   return (
     <div
@@ -508,6 +622,7 @@ export function ProfileCard({ profile }: { profile: Profile }) {
       data-profile-motion="static"
       data-profile-phase="static"
       data-profile-drag="idle"
+      data-profile-card-mode={lanyardMode}
     >
       <div className="profile-card-lanyard" ref={lanyardRef} aria-hidden="true">
         <svg className="profile-card-lanyard-svg" focusable="false">
@@ -516,6 +631,15 @@ export function ProfileCard({ profile }: { profile: Profile }) {
         </svg>
         <span className="profile-card-ring" />
       </div>
+      <div className="profile-card-lanyard3d" ref={lanyard3dRef} aria-hidden="true" />
+      {lanyardMode === '3d' ? (
+        // The DOM card is visually hidden in 3D mode (visibility:hidden), so
+        // the accessible identity moves into a screen-reader-only block.
+        <div className="sr-only">
+          <p>{profile.name}</p>
+          <p>{profile.title}</p>
+        </div>
+      ) : null}
       <div className="profile-card" ref={cardRef}>
         <span className="profile-card-clip" aria-hidden="true" />
         <div className="profile-card-photo">

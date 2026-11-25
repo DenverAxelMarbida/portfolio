@@ -1,10 +1,19 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useMotionPreferences } from './MotionPreferences';
 import { registerMotionAnimationControl } from './animationControls';
+import { constellationDepthOffset } from './parallaxDepth';
+import {
+  boostTwinkleWave,
+  responseTelemetry,
+  scrollResponseLevel,
+  scrollVelocity,
+  smoothScrollResponse,
+} from './scrollResponse';
 import {
   CONSTELLATION_LINKS,
   CONSTELLATION_MAX_LINK_DISTANCE,
   CONSTELLATION_NODES,
+  CONSTELLATION_TWINKLE_BOOST,
   CONSTELLATION_VIEWBOX,
   clampConstellationDpr,
   constellationBudgets,
@@ -41,6 +50,8 @@ export function ConstellationBackground() {
     if (!hydrated || !motionAllowed) {
       container.dataset.constellationMode = 'static';
       container.dataset.constellationPointer = 'off';
+      container.dataset.constellationDepth = '0';
+      container.dataset.constellationResponse = '0';
       return;
     }
 
@@ -70,6 +81,8 @@ export function ConstellationBackground() {
 
     let rafId = 0;
     let lastDraw = 0;
+    let lastDepthAttr = '-1';
+    let lastResponseAttr = '-1';
     let elapsed = 0;
     let disposed = false;
     let width = 0;
@@ -79,6 +92,10 @@ export function ConstellationBackground() {
     let offsetY = 0;
     let inView = true;
     let documentVisible = document.visibilityState !== 'hidden';
+    // CP7 T5 scroll-response level (0..1): rises with scroll velocity on
+    // positive-delta frames, decays toward 0 whenever scrolling stops.
+    let lastScrollY = -1;
+    let responseLevel = 0;
     let pointerTargetX = 0;
     let pointerTargetY = 0;
     let pointerX = 0;
@@ -112,6 +129,26 @@ export function ConstellationBackground() {
     function drawFrame() {
       ctx.clearRect(0, 0, width, height);
 
+      // CP7 T4 scroll depth: the panel scrolls with the page at native speed,
+      // so painting its nodes lower by the complement of the target factor
+      // (1 - 0.7) makes the figure travel at 0.7× the content speed. The
+      // offset is in screen pixels (never viewBox units — no extra scale) and
+      // capped at the canvas height so the figure stays inside its
+      // overflow-hidden canvas. See parallaxDepth.ts.
+      const parallaxOffset = constellationDepthOffset(window.scrollY, height);
+      const depthValue = String(Math.round(parallaxOffset));
+      if (depthValue !== lastDepthAttr) {
+        lastDepthAttr = depthValue;
+        container!.dataset.constellationDepth = depthValue;
+      }
+      // CP7 T5: bounded scroll-response level (0..100), exactly as the figure
+      // was last painted with.
+      const responseValue = responseTelemetry(responseLevel);
+      if (responseValue !== lastResponseAttr) {
+        lastResponseAttr = responseValue;
+        container!.dataset.constellationResponse = responseValue;
+      }
+
       const pointerShiftX = pointerX;
       const pointerShiftY = pointerY;
 
@@ -119,7 +156,7 @@ export function ConstellationBackground() {
         const node = CONSTELLATION_NODES[index] as { x: number; y: number };
         const drift = nodeDrift(index, elapsed);
         screenX[index] = offsetX + (node.x + drift.x + pointerShiftX) * scale;
-        screenY[index] = offsetY + (node.y + drift.y + pointerShiftY) * scale;
+        screenY[index] = offsetY + (node.y + drift.y + pointerShiftY) * scale + parallaxOffset;
       }
 
       // The asterism path is built once, then layered: a soft, low-opacity
@@ -151,10 +188,21 @@ export function ConstellationBackground() {
       // Concentric halo rings give each star a restrained layered glow;
       // per-node radius and haloWeight come from the traced magnitudes, so
       // prominent stars read brighter without any blur filters.
+      //
+      // CP7 T5 twinkle-only modulation: the brightness wave is lifted by the
+      // scroll-response level (clamped to the idle maximum), while nodeDrift
+      // stays untouched — the worst-case link length (base + ±8 drift + ±14
+      // pointer on both endpoints) already equals the cull threshold, so any
+      // drift increase would blink links in and out of range. See
+      // constellationGeometry.ts (CONSTELLATION_TWINKLE_BOOST).
       for (let index = 0; index < screenX.length; index += 1) {
         const node = CONSTELLATION_NODES[index] as { radius: number; haloWeight: number };
         const radius = Math.max(2, node.radius * scale);
-        const brightness = 0.5 + 0.5 * Math.sin(elapsed * 0.00035 + index * 0.85);
+        const brightness = boostTwinkleWave(
+          0.5 + 0.5 * Math.sin(elapsed * 0.00035 + index * 0.85),
+          CONSTELLATION_TWINKLE_BOOST,
+          responseLevel,
+        );
         const halo = node.haloWeight * (0.8 + 0.2 * brightness);
         const x = screenX[index] as number;
         const y = screenY[index] as number;
@@ -194,6 +242,17 @@ export function ConstellationBackground() {
         const delta = lastDraw === 0 ? 0 : now - lastDraw;
         elapsed += delta;
         lastDraw = now;
+
+        // CP7 T5: velocity is only read on frames with a positive delta, so a
+        // resumed frame after a frozen loop (delta 0) cannot spike; an
+        // unchanged scroll position decays the level toward 0.
+        const scrollY = window.scrollY || 0;
+        const scrollChanged = lastScrollY >= 0 && scrollY !== lastScrollY;
+        const responseTarget = scrollChanged
+          ? scrollResponseLevel(scrollVelocity(scrollY, lastScrollY, delta))
+          : 0;
+        responseLevel = smoothScrollResponse(responseLevel, responseTarget);
+        lastScrollY = scrollY;
 
         const targetX = pointerActive ? pointerTargetX : 0;
         const targetY = pointerActive ? pointerTargetY : 0;

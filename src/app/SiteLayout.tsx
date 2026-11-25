@@ -1,7 +1,15 @@
-import { useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { manifest } from '../content/manifest';
 import { useMotionPreferences } from '../components/motion/MotionPreferences';
 import { StartupIndicator } from '../components/motion/StartupIndicator';
+import { Reveal } from '../components/motion/Reveal';
 
 const NAVIGATION = [
   { label: 'Projects', href: '/#projects' },
@@ -35,8 +43,11 @@ function MotionControl() {
       ? 'Ambient motion is paused.'
       : 'Ambient motion is on.';
 
+  // CP7 T4 final refinement: the footer motion block is one of the contact
+  // reveal waves, so its flex-child wrapper lives in SiteLayout (with the
+  // data-reveal-item) and this component renders only the control content.
   return (
-    <div className="footer-motion">
+    <>
       <button
         type="button"
         className="motion-toggle"
@@ -50,7 +61,7 @@ function MotionControl() {
       <p id="motion-status" className="motion-status" aria-live="polite">
         {status}
       </p>
-    </div>
+    </>
   );
 }
 
@@ -66,7 +77,19 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const hydrated = useSyncExternalStore(subscribeToHydration, readHydrated, readServerHydrated);
   const mobile = useSyncExternalStore(subscribeToMobile, readMobile, readServerMobile);
   const [open, setOpen] = useState(false);
+  const [navAnimated, setNavAnimated] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
+
+  // The animated open/close state is opt-in after hydration: the server
+  // renders the menu open (`data-open="true"`, the no-JS native path), so
+  // transitions active at first paint would visibly animate the menu shut
+  // on every mobile load. The flag lands one painted frame after the
+  // hydration commit, so the closed state is already displayed before any
+  // transition exists, and every later toggle animates.
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setNavAnimated(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const showToggle = hydrated && mobile;
   const expanded = showToggle && open;
@@ -111,7 +134,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
                 onClick={() => setOpen((value) => !value)}
               >
                 <span className="nav-toggle-glyph" aria-hidden="true">
-                  {expanded ? '×' : '≡'}
+                  <span className="nav-toggle-bar" />
+                  <span className="nav-toggle-bar" />
                 </span>
               </button>
             )}
@@ -120,6 +144,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             id="primary-navigation"
             className="nav-list"
             data-open={mobile && !open ? 'false' : 'true'}
+            data-nav-animated={navAnimated || undefined}
           >
             {NAVIGATION.map((item) => (
               <li key={item.href}>
@@ -135,17 +160,26 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         <div className="page-container">{children}</div>
       </main>
       <footer id="contact" className="site-footer">
-        <div className="page-container site-footer-inner">
-          <div>
+        {/* CP7 T4 final refinement: the contact content reveals on its own
+            viewport entry, one block after another — heading + name, the
+            links column, then the motion control — at the hero cadence
+            (100ms per group) inside a single wave. The Reveal wrapper
+            carries the flex-container classes, so the accepted footer
+            geometry is unchanged; the three original blocks become the
+            wave's cascade items. */}
+        <Reveal className="page-container site-footer-inner">
+          <div data-reveal-item="0">
             <h2>Contact</h2>
             <p>{manifest.profile.name}</p>
           </div>
-          <div className="footer-links">
+          <div className="footer-links" data-reveal-item="1">
             <a href={`mailto:${manifest.profile.email}`}>{manifest.profile.email}</a>
             <a href={manifest.profile.github}>GitHub profile</a>
           </div>
-          <MotionControl />
-        </div>
+          <div className="footer-motion" data-reveal-item="2">
+            <MotionControl />
+          </div>
+        </Reveal>
       </footer>
     </>
   );

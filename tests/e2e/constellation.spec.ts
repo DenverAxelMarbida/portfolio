@@ -67,10 +67,10 @@ function instrument(page: Page) {
       const key = this.className;
       if (result && args[0] === '2d' && !(result as { __probe?: boolean }).__probe) {
         (result as { __probe?: boolean }).__probe = true;
-        const clear = (result as { clearRect: (...cargs: unknown[]) => unknown }).clearRect.bind(
-          result,
-        );
-        (result as { clearRect: (...cargs: unknown[]) => unknown }).clearRect = (
+        const clear = (
+          result as unknown as { clearRect: (...cargs: unknown[]) => unknown }
+        ).clearRect.bind(result);
+        (result as unknown as { clearRect: (...cargs: unknown[]) => unknown }).clearRect = (
           ...clearArgs: unknown[]
         ) => {
           probe.frames[key] = (probe.frames[key] ?? 0) + 1;
@@ -165,7 +165,8 @@ test.describe('ambient', () => {
       ),
       at: performance.now(),
     }));
-    // 50 px/s: real elapsed-time movement (≈35px across a 700ms window).
+    // 58 px/s (CP7 polish A, +16% over the accepted 50 px/s): real
+    // elapsed-time movement (≈41px across a 700ms window).
     // The window is normalized by the page's own performance.now clock
     // because Node timers and evaluate RPCs stretch under load — what
     // matters is that the ascent tracks the elapsed time the page actually
@@ -211,10 +212,30 @@ test.describe('ambient', () => {
       ),
       at: performance.now(),
     }));
-    // Drift may cover only the real time since resume (50 px/s) plus one
-    // throttled frame and rounding; Node timer stretch is normalized away.
-    const driftAllowance = Math.max(6, (resumed.at - resumeAt) * 0.055 + 4);
+    // Drift may cover only the real time since resume (58 px/s, CP7 polish
+    // A) plus one throttled frame and rounding; Node timer stretch is
+    // normalized away. The 0.075 coefficient matches the ascent-window
+    // upper bound: it must exceed the new 0.058 px/ms rate, which the
+    // previous 0.055 (tuned for 50 px/s) no longer guaranteed.
+    const driftAllowance = Math.max(6, (resumed.at - resumeAt) * 0.075 + 4);
     expect(Math.abs(resumed.ascent - frozen)).toBeLessThan(driftAllowance);
+  });
+
+  test('the atmospheric glow paints behind the content without layout impact (CP7 polish A)', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const glow = page.locator('.page-starfield');
+    // The glow is a static radial gradient painted on the existing fixed
+    // decorative layer — never an animated filter or a DOM box that could
+    // shift layout.
+    await expect(glow).toHaveCSS('background-image', /radial-gradient/);
+    await expect(glow).toHaveCSS('pointer-events', 'none');
+    // No scrollable overflow introduced: document width is untouched.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBe(0);
   });
 
   test('shooting stars appear occasionally with bounded lives and never overlap', async ({
@@ -289,7 +310,13 @@ test.describe('ambient', () => {
     instrument(page);
     await page.goto('/');
     await waitForCanvasMode(page);
-    await page.waitForTimeout(250);
+    // Measure steady-state scroll cadence after the lazy WebGL entrance,
+    // rather than racing shader startup with an arbitrary 250ms delay.
+    await expect(page.locator('.profile-card-shell')).toHaveAttribute(
+      'data-profile-phase',
+      'idle',
+      { timeout: 20_000 },
+    );
 
     const resetsBefore = await canvasResets(page);
     const framesBefore = await canvasFrames(page, STARFIELD_CANVAS);

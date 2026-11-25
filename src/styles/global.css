@@ -28,11 +28,20 @@
     color-scheme: dark;
     --gutter: 20px;
     --section-space: 64px;
+    /* Chrome above the home hero: header padding (10px × 2) plus the 44px
+       minimum control height. The header's 1px border-bottom is deliberately
+       excluded so the hero's viewport fill reaches the fold exactly. */
+    --header-chrome: 64px;
     --radius-control: 8px;
     --radius-card: 12px;
     /* Fallback strap length and the shell-local gap above the card; on wide
        layouts the strap length is measured at runtime instead. */
-    --profile-lanyard-length: 150px;
+    /* CP7 T4: owner correction — the resting strap is slightly shorter so
+       the card rests closer to the hero's visual center. Matches
+       LANYARD_REST_LENGTH (profileCardMotion.ts) so the physics derives from
+       the same number; stacked gap and wide-layout card position both
+       follow this token. */
+    --profile-lanyard-length: 120px;
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 1.6;
@@ -59,6 +68,13 @@
     :root {
       scroll-behavior: smooth;
     }
+  }
+
+  /* Native anchor navigation stays smooth only while motion is allowed; the
+     shared pause policy scrolls immediately (reduced motion never matches the
+     smooth rule above). */
+  html[data-motion-policy='paused'] {
+    scroll-behavior: auto;
   }
 
   body {
@@ -244,8 +260,47 @@
   }
 
   .nav-toggle-glyph {
-    font-size: 1.375rem;
-    line-height: 1;
+    position: relative;
+    display: block;
+    width: 18px;
+    height: 14px;
+  }
+
+  .nav-toggle-bar {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    border-radius: 1px;
+    background-color: currentColor;
+    transition: transform 240ms ease-out;
+  }
+
+  .nav-toggle-bar:first-child {
+    top: 0;
+  }
+
+  .nav-toggle-bar:last-child {
+    bottom: 0;
+  }
+
+  /* Open state folds the two bars into an × around the glyph's center. */
+  .nav-toggle[aria-expanded='true'] .nav-toggle-bar:first-child {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .nav-toggle[aria-expanded='true'] .nav-toggle-bar:last-child {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-toggle-bar {
+      transition: none;
+    }
+  }
+
+  html[data-motion-policy='paused'] .nav-toggle-bar {
+    transition: none;
   }
 
   .nav-list {
@@ -274,6 +329,83 @@
     .nav-list[data-open='false'] {
       display: none;
     }
+
+    /* Animated disclosure (only once `data-nav-animated` exists, set after
+       hydration so the server-rendered open menu never plays a close
+       animation on load). Closing animates opacity/transform while the
+       discrete display transition holds the layout until the fade ends,
+       then removes it from layout and the tab order exactly as before. */
+    .nav-list[data-nav-animated][data-open='false'] {
+      display: none;
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      transition:
+        opacity 240ms ease-out,
+        transform 240ms ease-out,
+        display 280ms allow-discrete;
+    }
+
+    .nav-list[data-nav-animated][data-open='true'] {
+      transition:
+        opacity 240ms ease-out,
+        transform 240ms ease-out,
+        display 280ms allow-discrete;
+    }
+
+    /* Open direction: the menu starts from the closed geometry. */
+    @starting-style {
+      .nav-list[data-nav-animated][data-open='true'] {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+    }
+
+    /* Menu items stagger in with the shared motion feel (opacity +
+       transform, ease-out), sized for a menu rather than a section. */
+    .nav-list[data-nav-animated][data-open='true'] a {
+      animation: nav-item-rise 240ms ease-out both;
+    }
+
+    .nav-list[data-nav-animated][data-open='true'] li:nth-child(2) a {
+      animation-delay: 60ms;
+    }
+
+    .nav-list[data-nav-animated][data-open='true'] li:nth-child(3) a {
+      animation-delay: 120ms;
+    }
+  }
+
+  @keyframes nav-item-rise {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Reduced motion and the shared pause policy toggle the menu instantly;
+     the closed state still removes the list from layout and tab order. The
+     override selectors mirror the animated state selectors so they win on
+     specificity as well as source order. */
+  @media (prefers-reduced-motion: reduce) {
+    .nav-list[data-nav-animated][data-open='false'],
+    .nav-list[data-nav-animated][data-open='true'],
+    .nav-list[data-nav-animated][data-open='true'] a {
+      transition: none;
+      animation: none;
+    }
+  }
+
+  html[data-motion-policy='paused'] .nav-list[data-nav-animated][data-open='false'],
+  html[data-motion-policy='paused'] .nav-list[data-nav-animated][data-open='true'],
+  html[data-motion-policy='paused'] .nav-list[data-nav-animated][data-open='true'] a {
+    transition: none;
+    animation: none;
   }
 
   @media (min-width: 768px) {
@@ -311,6 +443,14 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 48px;
     align-items: start;
+    /* CP7 T4 refinement: the hero fills the initial viewport so the sections
+       below it are never on screen at load — no preview is ever visible (and
+       no wave ever skipped) before the visitor scrolls. The fill subtracts
+       the chrome above the hero (header + main top padding); content centers
+       in the surplus space so a tall window never reads as an empty band. */
+    min-height: calc(100vh - var(--header-chrome) - var(--section-space));
+    min-height: calc(100svh - var(--header-chrome) - var(--section-space));
+    align-content: center;
   }
 
   .hero-copy {
@@ -385,9 +525,84 @@
     animation: none;
   }
 
+  /* CP7 T4 final visual-parity refinement: content groups rise as a
+     staggered cascade matching the owner's approved interactive simulation —
+     520ms cubic-bezier(.2, .75, .25, 1), opacity 0 → 1.00, 18px, smooth
+     overlapping animations (a block never waits for the previous to finish).
+     The cascade position comes from two sources: the item index inside its
+     wave (140ms per step) plus the wave's coordinated cascade delay
+     (--reveal-slot-delay), which Reveal.tsx sets inline per viewport-entry
+     batch so consecutive starts sit 140ms apart in DOM order — heading
+     first, each desktop row left-to-right — and batches arriving on
+     adjacent frames continue the ongoing cascade within the bounded
+     coordination window instead of restarting at 0. A solo arrival (each
+     mobile stacked card, each independent entry) gains no delay, and slots
+     never accumulate page-wide.
+     Armed pending waves are held invisible by the rule below; the
+     animation's backwards fill keeps them invisible through their slot
+     delay, so there is no visible seam when the wave starts. */
+  [data-reveal='playing'] [data-reveal-item] {
+    animation: section-reveal-rise 520ms cubic-bezier(.2, .75, .25, 1) both;
+    animation-delay: var(--reveal-slot-delay, 0ms);
+  }
+
+  [data-reveal='playing'] [data-reveal-item='1'] {
+    animation-delay: calc(var(--reveal-slot-delay, 0ms) + 140ms);
+  }
+
+  [data-reveal='playing'] [data-reveal-item='2'] {
+    animation-delay: calc(var(--reveal-slot-delay, 0ms) + 280ms);
+  }
+
+  [data-reveal='playing'] [data-reveal-item='3'] {
+    animation-delay: calc(var(--reveal-slot-delay, 0ms) + 420ms);
+  }
+
+  @keyframes section-reveal-rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Arming hide (CP7 T4 requirement 5): a wave that is below the viewport
+     when enhancement runs is armed and its content is held invisible at the
+     final layout position until the wave's reveal begins — content can no
+     longer scroll in painted at its final state and then re-animate. The
+     hide is scoped to the active motion policy, so no JavaScript, reduced
+     motion and a paused session keep every wave server-rendered readable,
+     and an already-on-screen wave is skipped rather than armed. Opacity
+     only: the layout never shifts. */
+  html[data-motion-policy='active']
+    [data-reveal-armed='true'][data-reveal='pending']
+    [data-reveal-item] {
+    opacity: 0;
+  }
+
+  /* Reduced motion and the shared pause policy settle every item into its
+     final readable state immediately (removing the animation restores the
+     natural state, which is the final state). */
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal='playing'] [data-reveal-item] {
+      animation: none;
+    }
+  }
+
+  html[data-motion-policy='paused'] [data-reveal-item] {
+    animation: none;
+  }
+
   .hero-motif {
     position: absolute;
-    inset: 40px 0 auto;
+    /* CP7 T4: owner correction — the constellation sits exactly 3px lower
+       than the approved CP7 baseline (40px); parallax and containment are
+       unchanged (the 420px height and overflow rule are untouched). */
+    inset: 43px 0 auto;
     height: 420px;
     z-index: 0;
     overflow: hidden;
@@ -607,12 +822,74 @@
     }
   }
 
+  /* Visually hidden but accessible to assistive technology. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    border: 0;
+    white-space: nowrap;
+  }
+
+  /* ---- 3D lanyard prototype (lazy canvas) ---- */
+
+  /* The canvas draws the identity card; the DOM card and SVG strap stay in
+     the layout (measurable for the card texture) but invisible. */
+  [data-profile-card-mode='3d'] .profile-card,
+  [data-profile-card-mode='3d'] .profile-card-lanyard {
+    visibility: hidden;
+  }
+
+  .profile-card-lanyard3d {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 1px;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Invisible card-sized drag target positioned by the scene each frame;
+     touch-action none owns the gesture, the canvas itself stays
+     pointer-transparent so page scrolling over the strap keeps working. */
+  .profile-card-3d-hit {
+    position: absolute;
+    touch-action: none;
+    cursor: grab;
+    pointer-events: auto;
+    z-index: 2;
+  }
+
+  .profile-card-shell[data-profile-drag='dragging'] .profile-card-3d-hit {
+    cursor: grabbing;
+  }
+
   .page-starfield {
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
+    /* CP7 pre-T6 polish A: a large, diffuse, low-contrast grey atmospheric
+       glow behind the content. Painted once as a static radial gradient on
+       the existing fixed decorative layer — no filter, no animation, no
+       layout impact; the transparent canvas draws the starfield over it,
+       and the layer stays fixed to the viewport so approved parallax and
+       native scrolling are untouched. Peak alpha 0.05 keeps the axe-sampled
+       below-fold heading composite above 4.5:1 (plain-background 4.93:1
+       degrades by only ~5% over near-black). */
+    background: radial-gradient(
+      circle 60vmax at 50% 30%,
+      rgba(184, 192, 202, 0.05),
+      rgba(184, 192, 202, 0) 70%
+    );
   }
 
   .page-starfield-canvas {
@@ -641,6 +918,14 @@
     .projects-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+  }
+
+  /* CP6-F: each card sits inside its own per-arrival-wave Reveal wrapper,
+     which is therefore the grid item. The wrapper is stretched to the row
+     height by the grid, so the card must fill it to keep the accepted
+     equal-height row geometry identical to the pre-wrapper grid. */
+  .projects-grid > [data-reveal] > .project-card {
+    height: 100%;
   }
 
   .project-card {
@@ -839,6 +1124,17 @@
     gap: 48px;
   }
 
+  /* CP7 T4 final refinement: each approach block's reveal waves live inside
+     the plain grid children (overview, workflow), which carry the flow-root
+     so each block's trailing paragraph margin stays inside the block and the
+     accepted 48px grid rhythm between blocks is unchanged (the wrapper would
+     otherwise absorb the collapsed margin and widen the gap by 16px). The
+     capabilities block keeps its own Reveal wrapper as the grid child. */
+  #approach > div,
+  #approach > [data-reveal] > div {
+    display: flow-root;
+  }
+
   .approach-overview p,
   .approach-capabilities p {
     margin-top: 16px;
@@ -878,13 +1174,19 @@
     counter-reset: workflow;
   }
 
-  .workflow-list li {
+  /* CP7 T4 final refinement: each workflow step is its own reveal wave
+     (Reveal inside the li). The step's visual identity — counter, rule and
+     padding — moves onto the revealed .approach-step content so the rule
+     rises with its step instead of sitting on the outer li while the content
+     is still armed-hidden. Boxes are unchanged: the li keeps its content
+     size, the ol keeps its grid rhythm. */
+  .workflow-list .approach-step {
     counter-increment: workflow;
     padding-top: 16px;
     border-top: 1px solid var(--color-border-subtle);
   }
 
-  .workflow-list li::before {
+  .workflow-list .approach-step::before {
     content: counter(workflow, decimal-leading-zero);
     display: block;
     margin-bottom: 8px;
@@ -907,7 +1209,17 @@
       gap: 48px 64px;
     }
 
-    .approach-workflow {
+    /* CP7 T4 final refinement: the approach grid children are the plain
+       overview/workflow containers plus the capabilities Reveal wrapper.
+       All stretch to the wrapper height so the accepted row geometry is
+       identical to the pre-wrapper grid; the workflow container spans the
+       full second row. */
+    #approach > div,
+    #approach > [data-reveal] > div {
+      height: 100%;
+    }
+
+    #approach > .approach-workflow {
       grid-column: 1 / -1;
     }
 

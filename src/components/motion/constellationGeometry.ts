@@ -151,6 +151,21 @@ export function linkWithinRange(
 /** Bounded fine-pointer parallax expressed in viewBox units. */
 export const CONSTELLATION_POINTER_INFLUENCE = 14;
 
+/**
+ * CP7 T5 subtle velocity-coupled twinkle lift for the constellation, scaled
+ * by the scroll-response level (0..1) from scrollResponse.ts.
+ *
+ * Twinkle-only by design: the worst-case rendered link length is base
+ * (~196 viewBox units) + drift (±8 on both endpoints) + fine-pointer
+ * parallax (±14 on both endpoints) = exactly CONSTELLATION_MAX_LINK_DISTANCE
+ * (240), with zero headroom. Any drift increase from the response would
+ * blink links in and out of the cull range, so the drift amplitude stays
+ * untouched and only the brightness wave is modulated. The wave is clamped
+ * by boostTwinkleWave to the idle maximum, so halo and core alphas never
+ * exceed the approved static ceilings.
+ */
+export const CONSTELLATION_TWINKLE_BOOST = 0.25;
+
 export interface ConstellationPointerTarget {
   x: number;
   y: number;

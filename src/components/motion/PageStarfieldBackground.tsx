@@ -1,8 +1,19 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useMotionPreferences } from './MotionPreferences';
 import { registerMotionAnimationControl } from './animationControls';
+import { starfieldDepthOffset } from './parallaxDepth';
+import {
+  boostTwinkleWave,
+  responseFactor,
+  responseTelemetry,
+  scrollResponseLevel,
+  scrollVelocity,
+  smoothScrollResponse,
+} from './scrollResponse';
 import {
   ASCENT_SPEED_PX_PER_MS,
+  STARFIELD_DRIFT_BOOST,
+  STARFIELD_TWINKLE_BOOST,
   advanceAscent,
   createMeteorClock,
   meteorEnvelope,
@@ -61,14 +72,12 @@ export function PageStarfieldBackground() {
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    // Hoisted function declarations below (drawFrame, paintSkyTelemetry)
-    // cannot rely on the narrowing above, so the checked reference is
-    // captured as its own constant.
     const canvasHost = container;
 
     if (!hydrated || !motionAllowed) {
       container.dataset.pageStarfieldMode = 'static';
       container.dataset.pageStarfieldPointer = 'off';
+      container.dataset.pageStarfieldResponse = '0';
       return;
     }
 
@@ -107,7 +116,12 @@ export function PageStarfieldBackground() {
     let lastAscentAttr = '-1';
     let lastMeteorCountAttr = '-1';
     let lastMeteorActiveAttr = '-1';
+    let lastDepthAttr = '-1';
+    let lastResponseAttr = '-1';
     let lastScrollY = -1;
+    // CP7 T5 scroll-response level (0..1): rises with scroll velocity on
+    // positive-delta frames, decays toward 0 whenever scrolling stops.
+    let responseLevel = 0;
     let elapsed = 0;
     let disposed = false;
     let width = 0;
@@ -207,25 +221,40 @@ export function PageStarfieldBackground() {
       ctx.strokeStyle = 'rgba(113, 119, 128, 0.18)';
       ctx.lineWidth = 0.8;
 
+      // CP7 T4 scroll depth: page-anchored stars are projected at
+      // `pageY - scrollY`, so adding the depth offset makes the layer travel
+      // at 0.5× the native content speed. See parallaxDepth.ts.
+      const parallaxOffset = starfieldDepthOffset(scrollY);
+
+      // CP7 T5 subtle velocity-coupled modulation: fast scrolling briefly
+      // lifts the twinkle wave (boostTwinkleWave, clamped to the idle
+      // maximum) and widens the drift swing; both decay back to idle as the
+      // response level decays.
+      const driftFactor = responseFactor(STARFIELD_DRIFT_BOOST, responseLevel);
+
       const clusters = new Map<number, Star[]>();
       for (const star of stars) {
         // The ascent offset wraps inside the page span, so a star leaving the
         // page top recycles from the page bottom without any visible
         // discontinuity.
         const pageY = wrapPageY(star.y - ascentY, pageHeight);
-        const screenY = pageY - scrollY;
+        // Normal scroll projection: pageY - scrollY. Parallax adds the offset
+        // (which is negative for downward scroll, so stars move up less than content).
+        const screenY = pageY - scrollY + parallaxOffset;
         if (screenY < -24 || screenY > height + 24) continue;
         const starScreenX =
           star.x +
-          Math.sin(elapsed * star.driftSpeed + star.phase) * star.driftRadius +
+          Math.sin(elapsed * star.driftSpeed + star.phase) * star.driftRadius * driftFactor +
           pointerX * 0.35;
         const starScreenY =
           screenY +
-          Math.cos(elapsed * star.driftSpeed + star.phase * 0.7) * (star.driftRadius * 0.35) +
+          Math.cos(elapsed * star.driftSpeed + star.phase * 0.7) *
+            (star.driftRadius * 0.35) *
+            driftFactor +
           pointerY * 0.2;
         if (star.clusterId < 0) {
-          const alpha =
-            0.42 + 0.28 * (0.5 + 0.5 * Math.sin(elapsed * star.pulseSpeed + star.phase));
+          const wave = 0.5 + 0.5 * Math.sin(elapsed * star.pulseSpeed + star.phase);
+          const alpha = 0.42 + 0.28 * boostTwinkleWave(wave, STARFIELD_TWINKLE_BOOST, responseLevel);
           ctx.fillStyle = star.luster ? '#c9d1dc' : '#b8c0ca';
           if (star.luster) {
             // Soft halo behind the brighter luster core — a cheap layered
@@ -283,8 +312,8 @@ export function PageStarfieldBackground() {
 
         for (const star of group) {
           if (!star._screen) continue;
-          const alpha =
-            0.52 + 0.32 * (0.5 + 0.5 * Math.sin(elapsed * star.pulseSpeed + star.phase));
+          const wave = 0.5 + 0.5 * Math.sin(elapsed * star.pulseSpeed + star.phase);
+          const alpha = 0.52 + 0.32 * boostTwinkleWave(wave, STARFIELD_TWINKLE_BOOST, responseLevel);
           ctx.fillStyle = star.luster ? '#c9d1dc' : '#b8c0ca';
           // CP4.5-D soft two-ring halo around every cluster star, layered
           // under the core; same cheap concentric-arc approach as before,
@@ -312,7 +341,7 @@ export function PageStarfieldBackground() {
       }
 
       drawMeteor();
-      paintSkyTelemetry(canvasHost);
+      paintSkyTelemetry(canvasHost, parallaxOffset, responseLevel);
     }
 
     function drawMeteor() {
@@ -395,11 +424,25 @@ export function PageStarfieldBackground() {
       if (meteors.active && !hadActive) meteorCount += 1;
     }
 
-    function paintSkyTelemetry(target: HTMLDivElement) {
+    function paintSkyTelemetry(target: HTMLDivElement, depthOffset: number, level: number) {
       const ascentAttr = String(Math.round(ascentY));
       if (ascentAttr !== lastAscentAttr) {
         lastAscentAttr = ascentAttr;
         target.dataset.pageStarfieldAscent = ascentAttr;
+      }
+      // CP7 T4: exposed for the parallax e2e — the applied scroll-depth
+      // offset, exactly as the layer was last painted with.
+      const depthValue = String(Math.round(depthOffset));
+      if (depthValue !== lastDepthAttr) {
+        lastDepthAttr = depthValue;
+        target.dataset.pageStarfieldDepth = depthValue;
+      }
+      // CP7 T5: bounded scroll-response level (0..100), exactly as the layer
+      // was last painted with.
+      const responseValue = responseTelemetry(level);
+      if (responseValue !== lastResponseAttr) {
+        lastResponseAttr = responseValue;
+        target.dataset.pageStarfieldResponse = responseValue;
       }
       const countAttr = String(meteorCount);
       if (countAttr !== lastMeteorCountAttr) {
@@ -438,6 +481,13 @@ export function PageStarfieldBackground() {
       if (scrollChanged || lastDraw === 0 || now - lastDraw >= frameInterval - FRAME_TOLERANCE_MS) {
         const delta = lastDraw === 0 ? 0 : now - lastDraw;
         elapsed += delta;
+        // CP7 T5: velocity is only read on frames with a positive delta, so a
+        // resumed frame after a frozen loop (delta 0) cannot spike; when the
+        // scroll position is unchanged the target is 0 and the level decays.
+        const responseTarget = scrollChanged
+          ? scrollResponseLevel(scrollVelocity(scrollY, lastScrollY, delta))
+          : 0;
+        responseLevel = smoothScrollResponse(responseLevel, responseTarget);
         // The ascent consumes exactly the loop's own elapsed interval: a
         // resumed frame after a frozen loop has delta 0 (see stopLoop), so a
         // hidden or paused page neither accrues time nor jumps on return.

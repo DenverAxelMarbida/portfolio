@@ -7,6 +7,8 @@ import {
   METEOR_MAX_TRAIL_PX,
   METEOR_MIN_TRAIL_PX,
   METEOR_TRAVEL_LENGTH_FACTOR,
+  STARFIELD_DRIFT_BOOST,
+  STARFIELD_TWINKLE_BOOST,
   advanceAscent,
   createMeteorClock,
   meteorEnvelope,
@@ -22,6 +24,14 @@ import {
   wrapPageY,
   type Meteor,
 } from '../../src/components/motion/starfieldSky';
+import {
+  SCROLL_RESPONSE_REFERENCE_PX_PER_MS,
+  boostTwinkleWave,
+  responseFactor,
+  scrollResponseLevel,
+  scrollVelocity,
+  smoothScrollResponse,
+} from '../../src/components/motion/scrollResponse';
 
 describe('infinite ascent', () => {
   test('advances purely with elapsed time', () => {
@@ -46,8 +56,12 @@ describe('infinite ascent', () => {
     expect(chunked).toBeCloseTo(one);
   });
 
-  test('runs at the owner-mandated 50 px/s', () => {
-    expect(ASCENT_SPEED_PX_PER_MS).toBe(0.05);
+  test('runs at the approved polish rate: +16% over the accepted 50 px/s baseline', () => {
+    // CP7 pre-T6 polish A: the owner approved a subtle 15–20% perceived
+    // ascent uplift over the visually accepted 50 px/s baseline.
+    expect(ASCENT_SPEED_PX_PER_MS).toBe(0.058);
+    expect(ASCENT_SPEED_PX_PER_MS / 0.05).toBeGreaterThanOrEqual(1.15);
+    expect(ASCENT_SPEED_PX_PER_MS / 0.05).toBeLessThanOrEqual(1.2);
   });
 
   test('hidden and paused intervals never accrue animation time', () => {
@@ -274,5 +288,74 @@ describe('comet appearance', () => {
       expect(angle).toBeGreaterThanOrEqual(18 - 0.001);
       expect(angle).toBeLessThanOrEqual(38 + 0.001);
     }
+  });
+});
+
+describe('scroll response modulation (CP7 T5)', () => {
+  test('velocity is px over frame delta, and a zero/negative delta never counts', () => {
+    // A zero or negative delta is a resumed frame after a frozen loop; it
+    // must not create a velocity spike, exactly like the ascent guard.
+    expect(scrollVelocity(400, 100, 200)).toBeCloseTo(1.5);
+    expect(scrollVelocity(100, 400, 200)).toBeCloseTo(-1.5);
+    expect(scrollVelocity(400, 100, 0)).toBe(0);
+    expect(scrollVelocity(400, 100, -16)).toBe(0);
+  });
+
+  test('the response level is bounded 0..1 and saturates at the reference speed', () => {
+    expect(SCROLL_RESPONSE_REFERENCE_PX_PER_MS).toBe(1.2);
+    expect(scrollResponseLevel(0)).toBe(0);
+    expect(scrollResponseLevel(0.6)).toBeCloseTo(0.5);
+    expect(scrollResponseLevel(2.4)).toBe(1);
+    // Scrolling up counts by magnitude, like scrolling down.
+    expect(scrollResponseLevel(-2.4)).toBe(1);
+    expect(scrollResponseLevel(Number.NaN)).toBe(0);
+  });
+
+  test('smoothing never overshoots and decays back to zero when idle', () => {
+    let level = 0;
+    for (let step = 0; step < 60; step += 1) level = smoothScrollResponse(level, 1);
+    expect(level).toBeGreaterThan(0.99);
+    expect(level).toBeLessThanOrEqual(1);
+    // Idle: target 0, same factor drives the decay.
+    for (let step = 0; step < 90; step += 1) level = smoothScrollResponse(level, 0);
+    expect(level).toBeLessThan(0.001);
+  });
+
+  test('the starfield boosts are subtle multipliers of the idle behavior', () => {
+    expect(STARFIELD_TWINKLE_BOOST).toBeGreaterThan(0);
+    expect(STARFIELD_TWINKLE_BOOST).toBeLessThanOrEqual(0.3);
+    expect(STARFIELD_DRIFT_BOOST).toBeGreaterThan(0);
+    expect(STARFIELD_DRIFT_BOOST).toBeLessThanOrEqual(0.5);
+    expect(responseFactor(STARFIELD_TWINKLE_BOOST, 0)).toBe(1);
+    expect(responseFactor(STARFIELD_TWINKLE_BOOST, 1)).toBeCloseTo(1.18);
+    expect(responseFactor(STARFIELD_DRIFT_BOOST, 1)).toBeCloseTo(1.35);
+  });
+
+  test('the boosted twinkle wave never exceeds the idle brightness maximum', () => {
+    for (const wave of [0, 0.25, 0.5, 0.75, 1]) {
+      for (const level of [0, 0.5, 1]) {
+        const boosted = boostTwinkleWave(wave, STARFIELD_TWINKLE_BOOST, level);
+        expect(boosted).toBeGreaterThanOrEqual(0);
+        expect(boosted).toBeLessThanOrEqual(1);
+        // Non-cluster alpha ceiling: 0.42 + 0.28 * 1 = 0.70.
+        expect(0.42 + 0.28 * boosted).toBeLessThanOrEqual(0.7 + 1e-9);
+        // Cluster alpha ceiling: 0.52 + 0.32 * 1 = 0.84.
+        expect(0.52 + 0.32 * boosted).toBeLessThanOrEqual(0.84 + 1e-9);
+      }
+    }
+    // At full wave the boosted value equals the idle maximum exactly, so the
+    // modulation only brightens mid-wave stars toward the approved ceiling.
+    expect(boostTwinkleWave(1, STARFIELD_TWINKLE_BOOST, 1)).toBe(1);
+  });
+
+  test('the boosted drift swing stays well inside the 24px screen cull margin', () => {
+    // Largest approved drift radius is 24px (10 + 14); the vertical term is
+    // scaled by 0.35. Drift is applied after the viewport cull, so this is a
+    // visual-subtlety bound, not a culling constraint.
+    const maxRadius = 24;
+    const horizontal = maxRadius * responseFactor(STARFIELD_DRIFT_BOOST, 1);
+    const vertical = maxRadius * 0.35 * responseFactor(STARFIELD_DRIFT_BOOST, 1);
+    expect(horizontal).toBeCloseTo(32.4);
+    expect(vertical).toBeLessThan(24);
   });
 });

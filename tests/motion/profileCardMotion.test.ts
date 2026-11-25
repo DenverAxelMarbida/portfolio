@@ -124,7 +124,7 @@ describe('geometry', () => {
       'translate3d(0.000px, 0.000px, 0) rotate(0.000deg)',
     );
     const moved = lanyardCardTransform(
-      { x: 12.5, y: 180, vx: 0, vy: 0, tilt: 4.25 },
+      { x: 12.5, y: LANYARD_REST_LENGTH + 30, vx: 0, vy: 0, tilt: 4.25 },
       LANYARD_CONFIG,
     );
     expect(moved).toBe('translate3d(12.500px, 30.000px, 0) rotate(4.250deg)');
@@ -175,7 +175,10 @@ describe('drop entrance', () => {
 describe('drag and release', () => {
   test('follows a drag target directly and holds it against gravity', () => {
     let state = lanyardRestState(LANYARD_CONFIG);
-    const target = { x: 60, y: 130 };
+    // Proportional to the rest length: inside the safe cone for any
+    // configured rest (the old absolute 130px target left the cone at the
+    // shortened CP7 T4 strap).
+    const target = { x: 48, y: LANYARD_REST_LENGTH - 18 };
     const drag = simulate(state, 0.3, { dragging: true, target });
     state = drag.state;
     expect(state.x).toBeCloseTo(target.x, 0);

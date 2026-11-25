@@ -3,6 +3,7 @@ import {
   CONSTELLATION_LINKS,
   CONSTELLATION_MAX_LINK_DISTANCE,
   CONSTELLATION_NODES,
+  CONSTELLATION_TWINKLE_BOOST,
   CONSTELLATION_VIEWBOX,
   clampConstellationDpr,
   constellationBudgets,
@@ -13,6 +14,10 @@ import {
   CONSTELLATION_DRIFT_AMPLITUDE,
   CONSTELLATION_POINTER_INFLUENCE,
 } from '../../src/components/motion/constellationGeometry';
+import {
+  boostTwinkleWave,
+  responseFactor,
+} from '../../src/components/motion/scrollResponse';
 
 describe('constellation geometry', () => {
   test('keeps the approved Capricornus ten-node/ten-link chain', () => {
@@ -107,5 +112,52 @@ describe('constellation geometry', () => {
     const edge = pointerInfluence(600, 400, rect);
     expect(Math.abs(edge.x)).toBeCloseTo(CONSTELLATION_POINTER_INFLUENCE, 5);
     expect(CONSTELLATION_MAX_LINK_DISTANCE).toBe(240);
+  });
+});
+
+describe('constellation scroll response (CP7 T5)', () => {
+  test('the response modulates twinkle only, leaving the drift budget untouched', () => {
+    // Twinkle-only by design: the worst-case rendered link length is base
+    // (~196) + drift (±8 both endpoints) + pointer (±14 both endpoints) =
+    // exactly the 240-unit cull threshold with zero headroom, so any drift
+    // increase from the response would blink links in and out of range.
+    expect(CONSTELLATION_TWINKLE_BOOST).toBeGreaterThan(0);
+    expect(CONSTELLATION_TWINKLE_BOOST).toBeLessThanOrEqual(0.3);
+    expect(CONSTELLATION_DRIFT_AMPLITUDE).toBe(8);
+    expect(CONSTELLATION_POINTER_INFLUENCE).toBe(14);
+  });
+
+  test('the worst-case link length stays clear of the cull threshold with zero response drift', () => {
+    // The response level scales brightness only, so the link-distance budget
+    // is unchanged by T5: the existing base + drift + pointer worst case.
+    for (const [from, to] of CONSTELLATION_LINKS) {
+      const base = Math.hypot(
+        CONSTELLATION_NODES[from]!.x - CONSTELLATION_NODES[to]!.x,
+        CONSTELLATION_NODES[from]!.y - CONSTELLATION_NODES[to]!.y,
+      );
+      const worstCase =
+        base + 2 * CONSTELLATION_DRIFT_AMPLITUDE + 2 * CONSTELLATION_POINTER_INFLUENCE;
+      expect(worstCase).toBeLessThanOrEqual(CONSTELLATION_MAX_LINK_DISTANCE);
+    }
+  });
+
+  test('the boosted brightness wave is clamped to the idle maximum', () => {
+    for (const wave of [0, 0.25, 0.5, 0.75, 1]) {
+      for (const level of [0, 0.5, 1]) {
+        const boosted = boostTwinkleWave(wave, CONSTELLATION_TWINKLE_BOOST, level);
+        expect(boosted).toBeGreaterThanOrEqual(0);
+        expect(boosted).toBeLessThanOrEqual(1);
+        // With brightness ≤ 1, the halo factor (0.8 + 0.2*b) stays ≤ 1 and
+        // the core factor (0.85 + 0.3*b) stays at the idle maximum, so halo
+        // and core alphas never exceed the approved static ceilings.
+        expect(0.8 + 0.2 * boosted).toBeLessThanOrEqual(1 + 1e-9);
+      }
+    }
+    expect(boostTwinkleWave(1, CONSTELLATION_TWINKLE_BOOST, 1)).toBe(1);
+  });
+
+  test('the twinkle factor is a subtle multiplier that is 1 at rest', () => {
+    expect(responseFactor(CONSTELLATION_TWINKLE_BOOST, 0)).toBe(1);
+    expect(responseFactor(CONSTELLATION_TWINKLE_BOOST, 1)).toBeCloseTo(1.25);
   });
 });

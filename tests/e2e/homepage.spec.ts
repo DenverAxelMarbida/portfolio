@@ -44,7 +44,10 @@ test('the supplied portrait is copied unchanged and displayed without transforma
   expect(digest).toBe(portraitHash);
   expect(await readFile('dist/media/profile/profile.jpg')).toEqual(await readFile(portraitSource));
 
-  await page.goto('/');
+  // This test verifies the DOM portrait pipeline (attribute, natural size,
+  // object-fit). On the WebGL default the canvas owns the portrait and the
+  // DOM card is hidden by design, so pin the DOM implementation.
+  await page.goto('/?lanyard=dom');
   const image = page.getByRole('img', { name });
   await expect(image).toBeVisible();
   await expect(image).toHaveAttribute('src', portraitPublicPath);
@@ -63,7 +66,9 @@ test('a failed portrait load shows the honest fallback without a broken image', 
   page,
 }) => {
   await page.route(`**${portraitPublicPath}`, (route) => route.abort());
-  await page.goto('/');
+  // The DOM fallback paragraph is the DOM lanyard's presentation; in 3D mode
+  // the DOM card is hidden by design. Pin the implementation under test.
+  await page.goto('/?lanyard=dom');
   await expect(page.getByText('Portrait unavailable', { exact: true })).toBeVisible();
   // The failed portrait leaves no image behind, while the four project-card
   // carousels hydrate into their full slide tracks.

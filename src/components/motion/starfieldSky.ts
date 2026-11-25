@@ -13,11 +13,13 @@
  */
 
 /**
- * Moderately fast, continuously perceptible rise: 30 px/s. At the 30fps idle
- * cap this is ~1 px per frame — above the point-stimulus motion threshold,
- * unlike the earlier imperceptible 6 px/s.
+ * Continuously perceptible rise, retuned at the CP7 pre-T6 polish checkpoint
+ * (refinement A): 58 px/s — a subtle +16% perceived uplift over the
+ * owner-approved 50 px/s baseline (approved band 15–20%). At the 30fps idle
+ * cap this is ~2 px per frame — well above the point-stimulus motion
+ * threshold, unlike the earlier imperceptible 6 px/s.
  */
-export const ASCENT_SPEED_PX_PER_MS = 0.05;
+export const ASCENT_SPEED_PX_PER_MS = 0.058;
 
 /** Shooting-star spacing window (CP4.5-B approved 3–7s). */
 export const METEOR_MIN_GAP_MS = 3000;
@@ -243,3 +245,20 @@ export function meteorGeometry(input: {
     endY: input.startY + Math.sin(angleRad) * trail,
   };
 }
+
+/**
+ * CP7 T5 subtle velocity-coupled modulation for the page starfield. Both
+ * boosts are scaled by the scroll-response level (0..1) from
+ * scrollResponse.ts, so at rest the loops run exactly as approved.
+ *
+ * Twinkle: fast scrolling lifts the twinkle wave toward the idle maximum —
+ * clamped by boostTwinkleWave, so no alpha ever exceeds the approved idle
+ * ceiling (0.70 non-cluster / 0.84 cluster).
+ *
+ * Drift: the drift swing widens by at most 1.35x. The largest radius
+ * (24 px) reaches ~32 px horizontally and ~11 px vertically (×0.35), and
+ * drift is applied after the viewport cull, so this stays well inside the
+ * 24 px screen cull margin without any link-cull-style constraint.
+ */
+export const STARFIELD_TWINKLE_BOOST = 0.18;
+export const STARFIELD_DRIFT_BOOST = 0.35;

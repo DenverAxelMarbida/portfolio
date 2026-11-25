@@ -26,8 +26,8 @@ const TILT_FOLLOW = 0.3;
 const TILT_VELOCITY = 0.0026;
 const TILT_EASE = 14;
 
-/** Fallback strap length before the layout is measured (matches --profile-lanyard-length). */
-export const LANYARD_REST_LENGTH = 150;
+/** Fallback strap length before the layout is measured (matches --profile-lanyard-length). CP7 T4: shortened so the card rests closer to the hero's visual center. */
+export const LANYARD_REST_LENGTH = 120;
 
 export interface LanyardConfig {
   /** Resting distance from the anchor to the card attachment. */
@@ -334,6 +334,16 @@ export function stepLanyard(state: LanyardState, options: LanyardOptions): Lanya
     return { x: 0, y: config.restLength, vx: 0, vy: 0, tilt: 0 };
   }
   return next;
+}
+
+/** Tracks whether any WebGL context can be created in this environment. */
+export function detectWebgl(): boolean {
+  try {
+    const probe = document.createElement('canvas');
+    return Boolean(probe.getContext('webgl2') ?? probe.getContext('webgl'));
+  } catch {
+    return false;
+  }
 }
 
 /**

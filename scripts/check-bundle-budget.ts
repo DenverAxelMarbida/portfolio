@@ -2,12 +2,19 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-/** Decimal byte budgets for the 01-04 Motion slice; CP5-S.1 limits owner-approved 2026-11-10. */
+/**
+ * Decimal byte budgets for the 01-04 Motion slice; CP5-S.1 limits
+ * owner-approved 2026-11-10. CP7 raises `deferredChunk` and `totalJs` for the
+ * lazy 3D lanyard prototype only: three.js + R3F measure ~240 KB gzip as the
+ * `lanyard3d` dynamic chunk, loaded after hydration and only when WebGL is
+ * available (or `?lanyard=3d`). The initial bundle (initialJs) and CSS
+ * budgets are unchanged and still gate the always-shipped payload.
+ */
 export const BUNDLE_BUDGET = {
   initialJs: 110_000,
-  deferredChunk: 35_000,
+  deferredChunk: 250_000,
   initialCss: 8_000,
-  totalJs: 200_000,
+  totalJs: 400_000,
 } as const;
 
 export interface BundleManifestChunk {

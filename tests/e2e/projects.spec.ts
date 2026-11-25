@@ -540,6 +540,19 @@ test.describe('isolated publication fixtures', () => {
     const figure = media.locator('.project-media-figure');
     await figure.focus();
 
+    // Hydration's initial render(0) can still be transitioning to the first
+    // real slide behind the start clone. Do not count that motion as part
+    // of the subsequent keyboard jump.
+    await expect(media).toHaveAttribute('data-carousel-active', '0');
+    await expect
+      .poll(() =>
+        media.locator('[data-carousel-track]').evaluate((track) => {
+          const x = new DOMMatrixReadOnly(getComputedStyle(track).transform).m41;
+          return Math.abs(x + track.getBoundingClientRect().width);
+        }),
+      )
+      .toBeLessThan(0.01);
+
     // Sample the computed track transform every animation frame across each
     // jump: a covered reposition shows at most the start and end values, while
     // a long transit across the intermediate slides would show many.
