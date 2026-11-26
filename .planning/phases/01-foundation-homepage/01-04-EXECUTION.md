@@ -2616,3 +2616,73 @@ referenced nowhere in `src/` or `scripts/`.
   bound of 4 (flake risk, assertion untouched).
 - **B is verified but not owner-approved. No C, D, T6, T7, commit or
   push.**
+
+---
+
+## CP7 ID Gray Shine refinement (2026-11-25)
+
+**Goal:** replace the 3D badge's flat-black look with a premium
+graphite/silver-gray satin-metal finish — subtle, realistic specular and
+edge highlights that respond to the existing lights and rotation, readable
+front content, and a matching reverse. No chrome/mirror reflections,
+excessive gloss, bloom, glow, glitter or decorative gradients. Geometry,
+thickness, lanyard, physics, showcase sequence, interactions and camera all
+preserved.
+
+**Root cause of the flat-black look:** `drawCardTexture` hardcoded the page
+background (`#080808`) and a `#303030` stroke instead of the DOM card's own
+design tokens — `.profile-card` paints `--color-card: #1d2025` with a
+`--color-border-subtle: #343840` border. The canvas card therefore never
+matched the approved DOM card surface. The side/reverse materials were also
+non-metal near-black (`#101010` / `#080808`, metalness 0), so no surface on
+the badge could catch light.
+
+### Changes (3 source files + 2 test files; 71 insertions / 30 deletions)
+
+| File | Change |
+|---|---|
+| `src/components/motion/LanyardScene.tsx` | `drawCardTexture` now reads the card's computed `backgroundColor`/`borderColor` (and the clip's own), keeping canvas and DOM card identical across token retunes |
+| `src/components/motion/cardMaterials.ts` | sides `#101010` → **`#23262b`** with metalness **0.5** (specular sweep across the walls during yaw); reverse `#080808` → **`#171a1e`** with metalness **0.45** (matching graphite satin, still neutral/unbranded); front stays dielectric (metalness 0, roughness 0.8) so the photo keeps its full diffuse albedo; all roughness ≥ 0.65 — satin, never gloss |
+| `src/components/motion/cardGeometry.ts` | chamfer `0.2 %` → **`0.4 %`** of card height (≈1.5 px on the 388 px hero card) so the rim reads as an edge highlight; silhouette and thickness are unchanged (the shape inset cancels the outward flare, so the bounding box is bevel-independent) |
+| `tests/motion/cardMaterials.test.ts` | surface contract updated to Gray Shine: graphite/metal sides + reverse, dielectric front |
+| `tests/motion/cardGeometry.test.ts` | new chamfer-aperture test (planar cap inset < 0.3975) |
+
+`src/lanyard3d.ts` needed no change (it only calls `drawCardTexture`).
+The lighting rig (three directional lights + ambient) was deliberately
+untouched: the finish responds to the existing lighting, as requested.
+
+### Verification (2026-11-25)
+
+| Gate | Result |
+|---|---|
+| Focused RED → GREEN | cardMaterials + cardGeometry: **2 failed first** (old `#101010`/cap 0.398 received), then **6/6 passed** after implementation |
+| Full Vitest | **237/237 passed**, 20 files (236 baseline + 1 new chamfer test) |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0, `--max-warnings=0` |
+| `npm run build` + budgets | passed; initial JS **97.9/110.0 KB** gzip, CSS **6.5/8.0 KB**, largest deferred (`lanyard3d`) **241.2/250.0 KB** (269.2 KB total), total JS **367.1/400.0 KB**; 5 routes + 404 prerendered |
+| Focused Chromium e2e (`lanyard3d` + `lanyard3d-entrance` + `card-surfaces` + `accessibility`) | **23 passed, 0 failed**, incl. the WebGL surface fixture against the new finish (back channel < 65, channel spread < 12, `0 < light response < 25`) and all mode/drag/pause/entrance/resize behavior |
+| `npm run format:check` | **18 files** — pre-existing baseline; none of the five touched files |
+
+### Visual evidence (before/after)
+
+`C:/Users/hp/AppData/Local/Temp/opencode/id-gray-shine/{before,after}/` —
+`01-desktop-front-rest`, `02-desktop-card-detail`, `03-desktop-drag-tilt`,
+`04-desktop-showcase-back`, `05-mobile-front-rest`,
+`06-desktop-drag-tilt-v2`, `07-desktop-card-detail-2x` (1280×800 and
+390×844). After: the front surround/name area renders as lit graphite with
+readable content, the chamfer rim catches light on drag-tilt, and the
+showcase reverse presents a matching graphite satin falloff; mobile layout
+is unchanged. Capture scripts (`snap.cjs`, `snap2.cjs`) live only in the
+temp directory.
+
+### Limitations / scope
+
+- `drawCardTexture` needs real layout + a 2D canvas, so it has no unit test;
+  it is covered by the visual captures and the full Chromium suite. The
+  material and geometry contracts are unit-pinned (RED→GREEN recorded above).
+- `envMapIntensity` was deliberately not configured: the scene has no
+  environment map, so it would be inert.
+- Desktop hero clipping remains the separate known issue; `format:check`
+  still fails only on the 18 pre-existing files (never reformatted).
+- No Refinement C/D, T6 or T7 work; no unrelated refactors. **Not
+  committed — awaiting owner visual approval.**

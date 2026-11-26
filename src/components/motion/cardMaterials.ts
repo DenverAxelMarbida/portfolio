@@ -8,10 +8,16 @@ import * as THREE from 'three';
  */
 export const CARD_THICKNESS_RATIO = 0.025;
 
-/** Side faces (4): visible only while the card yaws/pitches off-axis. */
-const SIDE_COLOR = '#101010';
-/** Reverse face: matte near-black, no branding (owner: neutral reverse). */
-const BACK_COLOR = '#080808';
+/**
+ * Gray Shine finish: the badge reads as satin graphite metal rather than
+ * flat black. The side walls carry metalness 0.5 so the three fixed scene
+ * lights produce a specular sweep across them as the card yaws/pitches —
+ * this is the visible "edge highlight responds to rotation" effect. Roughness
+ * 0.72 keeps it satin: broad soft highlights, no gloss or chrome.
+ */
+const SIDE_COLOR = '#23262b';
+/** Reverse: graphite satin matching the walls, still neutral and unbranded. */
+const BACK_COLOR = '#171a1e';
 
 /**
  * Side slots 0..3, textured front 4, neutral reverse 5. The rounded extrusion
@@ -22,17 +28,19 @@ export function createCardMaterials(texture: THREE.Texture | null): THREE.Materi
   const side = new THREE.MeshStandardMaterial({
     color: SIDE_COLOR,
     roughness: 0.72,
-    metalness: 0,
+    metalness: 0.5,
   });
   const front = new THREE.MeshStandardMaterial({
     map: texture ?? null,
     roughness: 0.8,
+    // Dielectric on purpose: metalness would tint and darken the photo.
+    metalness: 0,
     alphaTest: 0.5,
   });
   const back = new THREE.MeshStandardMaterial({
     color: BACK_COLOR,
     roughness: 0.7,
-    metalness: 0,
+    metalness: 0.45,
   });
   return [side, side, side, side, front, back];
 }

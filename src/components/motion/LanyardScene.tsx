@@ -379,8 +379,12 @@ export function drawCardTexture(card: HTMLElement): HTMLCanvasElement {
 
   const cardStyle = window.getComputedStyle(card);
   const radius = Number.parseFloat(cardStyle.borderRadius) || 12;
-  const background = '#080808';
-  const border = '#303030';
+  // The DOM card paints its design-token surface (--color-card); the texture
+  // used to hardcode the page background (#080808), so the 3D badge rendered
+  // flat black while the approved DOM card was graphite. Reading the computed
+  // colors keeps the canvas card and DOM card identical across token retunes.
+  const background = cardStyle.backgroundColor;
+  const border = cardStyle.borderColor;
 
   const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
     ctx.beginPath();
@@ -411,15 +415,17 @@ export function drawCardTexture(card: HTMLElement): HTMLCanvasElement {
     height: element.offsetHeight,
   });
 
-  // Metal clip at the card's top edge.
+  // Metal clip at the card's top edge — its own computed surface and control
+  // border, matching how the DOM clip differs from the card body.
   const clipElement = card.querySelector<HTMLElement>('.profile-card-clip');
   if (clipElement) {
+    const clipStyle = window.getComputedStyle(clipElement);
     const rect = childRect(clipElement);
     roundRect(rect.left, rect.top, rect.width, rect.height, 5);
-    ctx.fillStyle = background;
+    ctx.fillStyle = clipStyle.backgroundColor;
     ctx.fill();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = border;
+    ctx.strokeStyle = clipStyle.borderColor;
     ctx.stroke();
   }
 

@@ -3,7 +3,11 @@ import { CARD_THICKNESS_RATIO } from './cardMaterials';
 
 /** Rounded corners and a narrow bevel catch light without a glossy coating. */
 export function createCardGeometry(width: number, height: number): THREE.ExtrudeGeometry {
-  const bevel = height * 0.002;
+  // 0.4 % of card height ≈ 1.5 px chamfer on the 388 px hero card: wide
+  // enough that the graphite metal rim reads as an edge highlight, while the
+  // silhouette stays exact — the shape inset cancels the outward flare, so
+  // the bounding box is unchanged for any bevel value.
+  const bevel = height * 0.004;
   const radius = height * 0.03;
   const x = width / 2 - bevel;
   const y = height / 2 - bevel;

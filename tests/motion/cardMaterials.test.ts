@@ -7,42 +7,45 @@ import {
 } from '../../src/components/motion/cardMaterials';
 
 /**
- * CP7 Refinement B surface contract: the card is a volumetric slab with six
- * distinct faces — four side walls, the textured front, and the matte
- * near-black reverse exposed by the showcase turn.
+ * CP7 ID Gray Shine surface contract: the badge is a satin graphite/silver
+ * metal — graphite side walls with enough metalness (≥ 0.3) for specular
+ * light to travel across them during yaw, a matching graphite reverse, and a
+ * dielectric front so the photo texture keeps its full diffuse albedo.
+ * Roughness stays ≥ 0.65 everywhere: satin, never gloss or chrome.
  */
-describe('card materials (B: thickness / front / back / sides)', () => {
+describe('card materials (Gray Shine: graphite satin metal)', () => {
   test('six materials in boxGeometry face order: +x, −x, +y, −y (sides), +z (front), −z (back)', () => {
     const texture = new THREE.Texture();
     const materials = createCardMaterials(texture);
     expect(materials).toHaveLength(6);
 
-    // Sides: dark plastic walls, one per lateral face.
-    for (const side of materials.slice(0, 4)) {
-      expect(side).toBeInstanceOf(THREE.MeshStandardMaterial);
-      const standard = side as THREE.MeshStandardMaterial;
-      expect(standard.color.getHexString()).toBe('101010');
-      expect(standard.roughness).toBeGreaterThanOrEqual(0.65);
-      expect(standard.metalness).toBe(0);
-    }
+    // Sides: graphite metal walls, one shared instance per lateral face.
+    const side = materials[0] as THREE.MeshStandardMaterial;
+    expect(side).toBeInstanceOf(THREE.MeshStandardMaterial);
+    expect(side.color.getHexString()).toBe('23262b');
+    expect(side.metalness).toBeCloseTo(0.5, 5);
+    expect(side.metalness).toBeGreaterThanOrEqual(0.3);
+    expect(side.roughness).toBeGreaterThanOrEqual(0.65);
+    expect(side.roughness).toBeLessThan(0.9);
+    for (const wall of materials.slice(1, 4)) expect(wall).toBe(side);
 
-    // Front: the exact card render — photo texture with alpha-tested corners.
+    // Front: the exact card render — photo texture with alpha-tested corners,
+    // dielectric (metalness 0) so the portrait and text never go dark.
     const front = materials[4] as THREE.MeshStandardMaterial;
     expect(front.map).toBe(texture);
     expect(front.alphaTest).toBeCloseTo(0.5, 5);
     expect(front.roughness).toBeCloseTo(0.8, 5);
+    expect(front.metalness).toBe(0);
 
-    // Reverse: matte near-black, no texture, no branding channel.
+    // Reverse: graphite satin — matching finish, no texture, no branding.
     const back = materials[5] as THREE.MeshStandardMaterial;
-    expect(back.color.getHexString()).toBe('080808');
+    expect(back.color.getHexString()).toBe('171a1e');
     expect(back.map).toBeNull();
+    expect(back.metalness).toBeCloseTo(0.45, 5);
     expect(back.roughness).toBeGreaterThanOrEqual(0.65);
-    expect(back.metalness).toBe(0);
-    // Lighting response is checked separately by the browser surface fixture.
     expect(back.roughness).toBeLessThan(0.9);
 
     // All three surface families are visually distinct.
-    const side = materials[0] as THREE.MeshStandardMaterial;
     expect(side.color.getHexString()).not.toBe(front.color.getHexString());
     expect(side.color.getHexString()).not.toBe(back.color.getHexString());
     expect(front.map).not.toBe(back.map);
